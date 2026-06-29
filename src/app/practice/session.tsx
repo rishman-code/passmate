@@ -34,14 +34,13 @@ export default function PracticeSessionScreen() {
     correctCount,
     selectAnswer,
     nextQuestion,
-    getCurrentQuestion,
   } = usePracticeStore();
 
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const recordedRef = useRef<string | null>(null);
 
-  const question = getCurrentQuestion();
+  const question = questions[currentIndex] ?? null;
   const isLastQuestion = currentIndex >= questions.length - 1;
   const isComplete = showResult && isLastQuestion;
 

@@ -37,10 +37,9 @@ export default function MockTestSessionScreen() {
     previousQuestion,
     tick,
     finishTest,
-    getCurrentQuestion,
   } = useMockTestStore();
 
-  const question = getCurrentQuestion();
+  const question = questions[currentIndex] ?? null;
 
   useEffect(() => {
     if (!isActive && questions.length > 0) {
