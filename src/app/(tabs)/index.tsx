@@ -1,0 +1,211 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Button } from '@/components/button';
+import { ProgressBar } from '@/components/progress-bar';
+import { StatCard } from '@/components/stat-card';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import {
+  MOCK_TEST_PASS_SCORE,
+  MOCK_TEST_QUESTION_COUNT,
+  PREMIUM_PRICE,
+} from '@/constants/categories';
+import { BorderRadius, Spacing } from '@/constants/theme';
+import { useQuestions } from '@/hooks/use-questions';
+import { useTheme } from '@/hooks/use-theme';
+import { useProgressStore } from '@/stores/progress-store';
+import { useSubscriptionStore } from '@/stores/subscription-store';
+
+export default function HomeScreen() {
+  const theme = useTheme();
+  const { isLoading, weakestCategories } = useQuestions();
+  const totalAnswered = useProgressStore((s) => s.getTotalAnswered());
+  const overallAccuracy = useProgressStore((s) => s.getOverallAccuracy());
+  const isPremium = useSubscriptionStore((s) => s.isPremium);
+
+  if (isLoading) {
+    return (
+      <ThemedView style={styles.centered}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </ThemedView>
+    );
+  }
+
+  return (
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <ThemedText style={styles.greeting}>PassMate</ThemedText>
+            <ThemedText themeColor="textSecondary">
+              Your AI-powered DVSA theory test companion
+            </ThemedText>
+          </View>
+
+          {!isPremium ? (
+            <Pressable
+              onPress={() => router.push('/paywall')}
+              style={[styles.premiumBanner, { backgroundColor: theme.primary }]}>
+              <Ionicons name="sparkles" size={24} color="#FFFFFF" />
+              <View style={styles.premiumText}>
+                <ThemedText style={styles.premiumTitle}>Unlock Full Access</ThemedText>
+                <ThemedText style={styles.premiumSubtitle}>
+                  AI explanations, mock tests & more — {PREMIUM_PRICE}
+                </ThemedText>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+            </Pressable>
+          ) : null}
+
+          <View style={styles.statsRow}>
+            <StatCard label="Answered" value={String(totalAnswered)} />
+            <StatCard
+              label="Accuracy"
+              value={`${overallAccuracy}%`}
+              accentColor={overallAccuracy >= 86 ? theme.success : theme.text}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
+            <Button
+              title="Start Adaptive Practice"
+              onPress={() => router.push('/practice/session')}
+              fullWidth
+            />
+            <Button
+              title="Take Mock Test"
+              variant="secondary"
+              onPress={() => router.push('/mock-test')}
+              fullWidth
+            />
+          </View>
+
+          <View style={[styles.mockInfo, { backgroundColor: theme.backgroundElement }]}>
+            <Ionicons name="timer-outline" size={20} color={theme.primary} />
+            <ThemedText type="small" themeColor="textSecondary">
+              Mock test: {MOCK_TEST_QUESTION_COUNT} questions, 57 minutes. Pass mark:{' '}
+              {MOCK_TEST_PASS_SCORE}/{MOCK_TEST_QUESTION_COUNT}.
+            </ThemedText>
+          </View>
+
+          {weakestCategories.length > 0 ? (
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Weak Spots</ThemedText>
+              {weakestCategories.map((cat) => (
+                <View
+                  key={cat.category}
+                  style={[styles.weakSpot, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                  <View style={styles.weakSpotHeader}>
+                    <ThemedText style={styles.weakSpotTitle}>{cat.category}</ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {cat.correct_answers}/{cat.total_questions} correct
+                    </ThemedText>
+                  </View>
+                  <ProgressBar
+                    progress={cat.accuracy_percentage}
+                    color={cat.accuracy_percentage < 70 ? theme.error : theme.warning}
+                  />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={[styles.emptyWeak, { backgroundColor: theme.backgroundElement }]}>
+              <ThemedText themeColor="textSecondary">
+                Start practising to identify your weak spots.
+              </ThemedText>
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  safeArea: {
+    flex: 1,
+  },
+  scroll: {
+    padding: Spacing.four,
+    gap: Spacing.four,
+  },
+  header: {
+    gap: Spacing.one,
+    paddingTop: Spacing.two,
+  },
+  greeting: {
+    fontSize: 32,
+    fontWeight: '700',
+  },
+  premiumBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.three,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.two,
+  },
+  premiumText: {
+    flex: 1,
+    gap: 2,
+  },
+  premiumTitle: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  premiumSubtitle: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+  },
+  section: {
+    gap: Spacing.three,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  mockInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    padding: Spacing.three,
+    borderRadius: BorderRadius.md,
+  },
+  weakSpot: {
+    padding: Spacing.three,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    gap: Spacing.two,
+  },
+  weakSpotHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  weakSpotTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
+  },
+  emptyWeak: {
+    padding: Spacing.four,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+  },
+});
