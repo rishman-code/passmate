@@ -30,7 +30,16 @@ Onboarding → Home (bug-fixed quick action, real Supabase questions) → Practi
 - AI explanation text isn't markdown-rendered (shows literal `##`/`**`) — cosmetic, not raised by user yet.
 - Mock Test (50Q) full flow only smoke-tested, not deeply verified.
 
+## Session 3 changes (2026-07-24) — question bank expansion
+- User asked for a comparison of question bank size vs competitors: found DB had only **119 unique questions** (8-10 per category) vs the official DVSA revision bank (~700-750+) and market leaders like Theory Test Pro (960). Recommended generating more.
+- Built `/app/backend/scripts/generate_questions.py`: fetches existing questions per category from Supabase (to avoid duplicates), prompts Claude for N new factually-accurate DVSA-style questions in strict JSON, inserts into Supabase via REST (anon key has insert rights on `questions` table — no RLS configured).
+- Generated a 42-question sample for "Alertness" first for approval, user approved, then scaled to all 14 categories.
+- **Mid-run the EMERGENT_LLM_KEY hit its budget cap** (5 categories done via Emergent key). User provided their own Anthropic API key (`sk-ant-api03-...`) to continue. Switched both `backend/server.py` (`/api/ai-explanation`) and `generate_questions.py` to use the user's own key directly via the `anthropic` Python SDK when `ANTHROPIC_API_KEY` is set in `backend/.env`, falling back to `emergentintegrations` + `EMERGENT_LLM_KEY` only if that var is absent.
+- Final result: **714 total questions, 51 per category across all 14 DVSA categories** — now in line with competitor apps.
+- `backend/.env` now has both `EMERGENT_LLM_KEY` and `ANTHROPIC_API_KEY` (the latter takes priority in code).
+
 ## Next Action Items
 - Optional: add data-testid/accessibility props across interactive elements.
 - Optional: render AI explanation markdown properly.
-- Ask user if/when they want RevenueCat wired for real IAP, or Anthropic own-key instead of Emergent key long-term.
+- Optional: spot-check a larger random sample of the 595 newly generated questions for factual accuracy (currently only manually reviewed a handful per category).
+- Ask user if/when they want RevenueCat wired for real IAP.

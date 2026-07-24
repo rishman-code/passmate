@@ -5,6 +5,7 @@ import re
 import sys
 import uuid
 
+import anthropic
 import httpx
 from dotenv import load_dotenv
 
@@ -16,6 +17,7 @@ REPO_ROOT = os.path.dirname(BACKEND_DIR)
 load_dotenv(os.path.join(BACKEND_DIR, '.env'))
 load_dotenv(os.path.join(REPO_ROOT, '.env'))
 
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 SUPABASE_URL = os.environ.get('EXPO_PUBLIC_SUPABASE_URL')
 SUPABASE_ANON_KEY = os.environ.get('EXPO_PUBLIC_SUPABASE_ANON_KEY')
@@ -26,6 +28,12 @@ DVSA_CATEGORIES = [
     'Vehicle Handling', 'Motorway Rules', 'Rules of the Road',
     'Road and Traffic Signs', 'Documents', 'Accidents', 'Vehicle Loading',
 ]
+
+SYSTEM_MESSAGE = (
+    "You are a UK driving theory test content writer with deep knowledge of the official "
+    "DVSA Highway Code and theory test syllabus. You write factually accurate, exam-realistic "
+    "multiple-choice questions."
+)
 
 
 async def fetch_existing_questions(category: str):
@@ -46,17 +54,26 @@ def extract_json_array(text: str):
     return json.loads(match.group(0))
 
 
-async def generate_questions(category: str, count: int, existing: list[str]):
+async def call_claude(prompt: str) -> str:
+    if ANTHROPIC_API_KEY:
+        client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+        message = await client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=8000,
+            system=SYSTEM_MESSAGE,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return message.content[0].text
+
     chat = LlmChat(
         api_key=EMERGENT_LLM_KEY,
         session_id=str(uuid.uuid4()),
-        system_message=(
-            "You are a UK driving theory test content writer with deep knowledge of the official "
-            "DVSA Highway Code and theory test syllabus. You write factually accurate, exam-realistic "
-            "multiple-choice questions."
-        ),
+        system_message=SYSTEM_MESSAGE,
     ).with_model("anthropic", "claude-sonnet-4-6")
+    return await chat.send_message(UserMessage(text=prompt))
 
+
+async def generate_questions(category: str, count: int, existing: list[str]):
     existing_list = "\n".join(f"- {q}" for q in existing) or "(none yet)"
 
     prompt = f"""Generate exactly {count} NEW UK DVSA driving theory test multiple-choice questions for the category "{category}".
@@ -73,7 +90,7 @@ Return ONLY a raw JSON array (no markdown, no commentary), each item shaped exac
 {{"question_text": "...", "option_a": "...", "option_b": "...", "option_c": "...", "option_d": "...", "correct_answer": "a", "explanation": "..."}}
 """
 
-    response = await chat.send_message(UserMessage(text=prompt))
+    response = await call_claude(prompt)
     questions = extract_json_array(response)
     for q in questions:
         q["id"] = str(uuid.uuid4())
