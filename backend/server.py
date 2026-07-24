@@ -1,9 +1,10 @@
 import os
+import uuid
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
@@ -22,18 +23,18 @@ app.add_middleware(
 
 
 class ExplanationRequest(BaseModel):
-    question_text: str
-    category: str
-    wrong_answer_text: str
-    correct_answer_text: str
-    official_explanation: str
+    question_text: str = Field(max_length=1000)
+    category: str = Field(max_length=100)
+    wrong_answer_text: str = Field(max_length=500)
+    correct_answer_text: str = Field(max_length=500)
+    official_explanation: str = Field(max_length=1000)
 
 
 @app.post("/api/ai-explanation")
 async def generate_ai_explanation(payload: ExplanationRequest):
     chat = LlmChat(
         api_key=EMERGENT_LLM_KEY,
-        session_id="passmate-explanation",
+        session_id=str(uuid.uuid4()),
         system_message="You are a friendly UK driving instructor helping a learner prepare for their DVSA theory test.",
     ).with_model("anthropic", "claude-sonnet-4-6")
 
@@ -45,7 +46,11 @@ Official DVSA explanation: {payload.official_explanation}
 
 Explain in 2-3 short paragraphs why the student's answer was wrong and why the correct answer is right. Use simple language. Be encouraging, not condescending."""
 
-    response = await chat.send_message(UserMessage(text=prompt))
+    try:
+        response = await chat.send_message(UserMessage(text=prompt))
+    except Exception:
+        raise HTTPException(status_code=502, detail="AI provider error")
+
     return {"explanation": response}
 
 

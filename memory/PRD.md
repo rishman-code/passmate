@@ -1,38 +1,36 @@
 # PassMate — DVSA Theory Test Prep App
 
 ## Original ask
-User connected an existing GitHub repo and asked to review how much of it is a working app, then show a preview. User chose: "review only, no fixes" and confirmed it's meant to be a mobile-styled web app.
+User connected an existing GitHub repo and asked to review how much of it is a working app, then show a preview (session 1). Session 2: fix the Home quick-action bug found in review, and decide on the AI-explanation architecture (cost/backend question).
 
 ## What this repo actually is
-Not the platform's default backend+frontend template. It is a standalone **Expo (React Native + react-native-web) app** at repo root (`/app`), using `expo-router` for file-based routing. No custom backend server — it talks directly to **Supabase** (BaaS) for data, **Anthropic Claude** for AI explanations, and **RevenueCat** for IAP, all optional/client-side.
+Not the platform's default backend+frontend template. It is a standalone **Expo (React Native + react-native-web) app** at repo root (`/app`), using `expo-router`. Talks to **Supabase** (BaaS, now the user's real project) for question data, and (as of session 2) a new minimal **FastAPI backend** (`/app/backend`) for AI explanations via Claude. RevenueCat for IAP (not configured — dev fallback).
 
-Tech: Expo ~56, React 19, React Native 0.85, Zustand for state, TypeScript.
+Tech: Expo ~56, React 19, React Native 0.85, Zustand, TypeScript, FastAPI (new).
 
-## Core features (as built)
-- Onboarding carousel (3 slides) → gated by `hasSeenOnboarding` (expo-secure-store / AsyncStorage on web)
-- Home tab: stats, quick actions, weak-spot summary
-- Practice tab: adaptive practice + practice-by-14-DVSA-category
-- Practice session: MCQ with instant feedback, official explanation, optional AI explanation
-- Mock Test: 50Q / 57min / pass mark 43 (gated behind Premium paywall)
-- Progress tab: accuracy, category breakdown, mock test history
-- Profile tab: premium status, restore purchases, paywall
-- Graceful fallback: without Supabase/Anthropic/RevenueCat keys, app uses 14 bundled `SAMPLE_QUESTIONS`, static DVSA explanations, and free-tier premium state — so UI is testable with zero config.
+## Session 2 changes (2026-07-24)
+1. **Bug fix**: `src/app/(tabs)/index.tsx` Home "Start Adaptive Practice" quick action now loads questions (fetchAllQuestions + buildAdaptiveQuestionQueue + setQuestions) before navigating, matching the Practice tab's working logic. Previously skipped straight to `/practice/session` with an empty store → "No questions loaded".
+2. **Supabase wired in**: root `.env` now has the user's real `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY`. App now pulls the real question bank instead of the 14 bundled samples.
+3. **AI explanation architecture decision**: kept AI explanations enabled (Claude), but moved the LLM call server-side instead of client-side `@anthropic-ai/sdk` (which exposed the key in the browser bundle — a real security/billing risk, especially with a shared Emergent Universal Key). New `POST /api/ai-explanation` FastAPI endpoint (`backend/server.py`) uses `emergentintegrations` + `EMERGENT_LLM_KEY` + `claude-sonnet-4-6`. Client (`src/lib/anthropic.ts`) now just does a `fetch` to this endpoint. Removed `@anthropic-ai/sdk` dependency.
+   - Existing Supabase `ai_explanation_cache` table + in-memory cache (`src/services/ai-explanations.ts`) already caches by `(question_id, wrong_answer)` — Claude is only ever called once per unique combo across all users, keeping costs low. This was already scaffolded in the codebase; no changes needed there.
+4. **Second bug found & fixed**: `EXPO_PUBLIC_REVENUECAT_IOS_KEY` placeholder value (`your_revenuecat_ios_key`) didn't contain the literal substring `"placeholder"`, so `isRevenueCatConfigured` was wrongly `true`, causing a RevenueCat SDK crash ("no singleton instance") on the paywall screen on web. Fixed by setting the env var to empty string (RevenueCat isn't set up yet).
+5. Hardened the new backend per testing-agent review: unique `session_id` (uuid4) per request instead of a shared one, try/except around the LLM call returning HTTP 502 on failure, `max_length` limits on all request fields.
 
-## Preview setup notes (infra only, no app code changed)
-- Env has Node 20.20.2; `@supabase/supabase-js` requires Node 22 native WebSocket → injected a `ws` polyfill via `NODE_OPTIONS --require` (not committed to repo) to boot the app.
-- Ran `npx expo start --web --port 3000` directly (repo has no `/frontend` folder so the platform's default supervisor frontend service doesn't apply here).
-- Metro web dev server is memory-heavy; bumped `--max-old-space-size=4096` after one OOM crash.
+## Preview/infra notes (env quirks, not app bugs)
+- Env has Node 20.20.2; `@supabase/supabase-js` needs Node 22 native WebSocket → `ws` polyfill injected via `NODE_OPTIONS --require /tmp/ws-polyfill.js` when starting `npx expo start --web --port 3000` manually (repo has no `/frontend` dir so platform's default supervisor frontend service doesn't apply).
+- Backend now runs normally via supervisor (`/app/backend` exists, autostart works).
+- Metro web dev server is memory-heavy; run with `--max-old-space-size=4096`.
 
-## Findings from review (reported to user, not fixed — user chose review-only)
-1. **Bug**: Home screen "Start Adaptive Practice" quick action (`src/app/(tabs)/index.tsx`) calls `router.push('/practice/session')` directly without loading questions into `usePracticeStore`, unlike the Practice tab's `startAdaptivePractice()` which correctly fetches + sets questions first. Result: "No questions loaded" error screen. The Practice tab's own "Start Adaptive Practice" button works correctly.
-2. Only 14 sample questions ship locally vs. the 50-question/14-category mock test design — real DVSA question bank needs Supabase configured to be meaningful at scale.
-3. No env keys are configured (Supabase URL/key, Anthropic key, RevenueCat iOS key) — app runs entirely on local fallbacks; premium/AI features aren't live end-to-end without those.
-4. Dev bundler (Metro) is heavy on this box; a production `expo export` build would behave differently/lighter than this preview.
+## Verified working (testing_agent, 100% pass both frontend/backend)
+Onboarding → Home (bug-fixed quick action, real Supabase questions) → Practice tab + 14 category cards → answer flow (color feedback + official explanation) → paywall (no more RevenueCat error) → dev premium unlock → live Claude AI explanation via new backend → Progress/Profile tabs → `/api/health` + `/api/ai-explanation` (incl. 422 validation).
 
-## Verified working via screenshots
-Onboarding carousel, Home tab (stats/quick actions/weak spots), Practice tab (adaptive + 14 category cards) all render correctly with real sample data and app branding.
+## Known minor items (not blocking, deferred)
+- No `data-testid`/`accessibilityRole` on RN Pressable elements (options, quick actions, tab bar) — would help future automated testing/screen readers.
+- Only 14 local sample questions remain as offline fallback if Supabase is ever unreachable (by design).
+- AI explanation text isn't markdown-rendered (shows literal `##`/`**`) — cosmetic, not raised by user yet.
+- Mock Test (50Q) full flow only smoke-tested, not deeply verified.
 
-## Next Action Items (deferred, pending user direction)
-- Fix Home quick-action bug (#1 above) if user wants changes now.
-- Ask user whether they want Supabase / Anthropic / RevenueCat keys wired in for real data + AI explanations + IAP.
-- Populate full DVSA question bank (schema already defined in `supabase/schema.sql`) if going the Supabase route.
+## Next Action Items
+- Optional: add data-testid/accessibility props across interactive elements.
+- Optional: render AI explanation markdown properly.
+- Ask user if/when they want RevenueCat wired for real IAP, or Anthropic own-key instead of Emergent key long-term.
