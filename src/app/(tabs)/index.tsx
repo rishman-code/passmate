@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,15 +17,35 @@ import {
 import { BorderRadius, Spacing } from '@/constants/theme';
 import { useQuestions } from '@/hooks/use-questions';
 import { useTheme } from '@/hooks/use-theme';
+import { fetchAllQuestions } from '@/services/questions';
+import { usePracticeStore } from '@/stores/practice-store';
 import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
+import { buildAdaptiveQuestionQueue } from '@/utils/practice';
 
 export default function HomeScreen() {
   const theme = useTheme();
   const { isLoading, weakestCategories } = useQuestions();
   const totalAnswered = useProgressStore((s) => s.getTotalAnswered());
   const overallAccuracy = useProgressStore((s) => s.getOverallAccuracy());
+  const progress = useProgressStore((s) => s.progress);
   const isPremium = useSubscriptionStore((s) => s.isPremium);
+  const setQuestions = usePracticeStore((s) => s.setQuestions);
+  const setCategoryFilter = usePracticeStore((s) => s.setCategoryFilter);
+  const [isStarting, setIsStarting] = useState(false);
+
+  const startAdaptivePractice = async () => {
+    setIsStarting(true);
+    try {
+      const allQuestions = await fetchAllQuestions();
+      const queue = buildAdaptiveQuestionQueue(allQuestions, progress, 10);
+      setCategoryFilter(null);
+      setQuestions(queue);
+      router.push('/practice/session');
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -73,7 +94,8 @@ export default function HomeScreen() {
             <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
             <Button
               title="Start Adaptive Practice"
-              onPress={() => router.push('/practice/session')}
+              onPress={startAdaptivePractice}
+              loading={isStarting}
               fullWidth
             />
             <Button
