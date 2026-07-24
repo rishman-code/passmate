@@ -48,7 +48,7 @@ export default function PaywallScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
+          <Pressable onPress={() => router.back()} hitSlop={12} testID="paywall-close-button">
             <Ionicons name="close" size={28} color={theme.text} />
           </Pressable>
         </View>
@@ -86,8 +86,15 @@ export default function PaywallScreen() {
             onPress={handlePurchase}
             loading={isLoading}
             fullWidth
+            testID="paywall-purchase-button"
           />
-          <Button title="Restore Purchases" variant="outline" onPress={handleRestore} fullWidth />
+          <Button
+            title="Restore Purchases"
+            variant="outline"
+            onPress={handleRestore}
+            fullWidth
+            testID="paywall-restore-button"
+          />
         </View>
       </SafeAreaView>
     </ThemedView>

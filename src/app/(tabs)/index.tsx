@@ -30,6 +30,7 @@ export default function HomeScreen() {
   const overallAccuracy = useProgressStore((s) => s.getOverallAccuracy());
   const progress = useProgressStore((s) => s.progress);
   const isPremium = useSubscriptionStore((s) => s.isPremium);
+  const openPaywall = useSubscriptionStore((s) => s.openPaywall);
   const setQuestions = usePracticeStore((s) => s.setQuestions);
   const setCategoryFilter = usePracticeStore((s) => s.setCategoryFilter);
   const [isStarting, setIsStarting] = useState(false);
@@ -44,6 +45,13 @@ export default function HomeScreen() {
       router.push('/practice/session');
     } finally {
       setIsStarting(false);
+    }
+  };
+
+  const handleUnlockPress = async () => {
+    const result = await openPaywall();
+    if (result === 'fallback') {
+      router.push('/paywall');
     }
   };
 
@@ -68,8 +76,9 @@ export default function HomeScreen() {
 
           {!isPremium ? (
             <Pressable
-              onPress={() => router.push('/paywall')}
-              style={[styles.premiumBanner, { backgroundColor: theme.primary }]}>
+              onPress={handleUnlockPress}
+              style={[styles.premiumBanner, { backgroundColor: theme.primary }]}
+              testID="home-unlock-banner">
               <Ionicons name="sparkles" size={24} color="#FFFFFF" />
               <View style={styles.premiumText}>
                 <ThemedText style={styles.premiumTitle}>Unlock Full Access</ThemedText>

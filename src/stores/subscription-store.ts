@@ -2,9 +2,12 @@ import { create } from 'zustand';
 
 import {
   getCustomerInfo,
-  hasPremiumEntitlement,
+  hasProEntitlement,
   initializeRevenueCat,
-  purchasePremium,
+  isRevenueCatConfigured,
+  presentCustomerCenter,
+  presentPaywall,
+  purchaseLifetime,
   restorePurchases,
 } from '@/lib/revenuecat';
 
@@ -15,6 +18,8 @@ interface SubscriptionState {
   initialize: () => Promise<void>;
   purchase: () => Promise<boolean>;
   restore: () => Promise<boolean>;
+  openPaywall: () => Promise<'presented' | 'fallback'>;
+  openCustomerCenter: () => Promise<void>;
   setPremium: (value: boolean) => void;
 }
 
@@ -29,7 +34,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
     try {
       await initializeRevenueCat();
       const customerInfo = await getCustomerInfo();
-      set({ isPremium: hasPremiumEntitlement(customerInfo), isLoading: false });
+      set({ isPremium: hasProEntitlement(customerInfo), isLoading: false });
     } catch (error) {
       set({
         isLoading: false,
@@ -42,8 +47,8 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const customerInfo = await purchasePremium();
-      const isPremium = hasPremiumEntitlement(customerInfo);
+      const customerInfo = await purchaseLifetime();
+      const isPremium = hasProEntitlement(customerInfo);
       set({ isPremium, isLoading: false });
       return isPremium;
     } catch (error) {
@@ -60,7 +65,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
 
     try {
       const customerInfo = await restorePurchases();
-      const isPremium = hasPremiumEntitlement(customerInfo);
+      const isPremium = hasProEntitlement(customerInfo);
       set({ isPremium, isLoading: false });
       return isPremium;
     } catch (error) {
@@ -70,6 +75,33 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
       });
       return false;
     }
+  },
+
+  // Presents RevenueCat's native paywall when configured (iOS/Android).
+  // Returns 'fallback' when RevenueCat isn't available (e.g. web preview / dev)
+  // so the caller can show the in-app fallback paywall screen instead.
+  openPaywall: async () => {
+    if (!isRevenueCatConfigured) {
+      return 'fallback';
+    }
+
+    try {
+      const { purchased, customerInfo } = await presentPaywall();
+      if (purchased) {
+        set({ isPremium: hasProEntitlement(customerInfo) });
+      }
+      return 'presented';
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Could not open paywall' });
+      return 'fallback';
+    }
+  },
+
+  openCustomerCenter: async () => {
+    if (!isRevenueCatConfigured) {
+      return;
+    }
+    await presentCustomerCenter();
   },
 
   setPremium: (value) => set({ isPremium: value }),

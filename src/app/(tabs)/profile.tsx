@@ -20,12 +20,19 @@ const FEATURES = [
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const { isPremium, isLoading, restore } = useSubscriptionStore();
+  const { isPremium, isLoading, restore, openPaywall, openCustomerCenter } = useSubscriptionStore();
 
   const handleRestore = async () => {
     const restored = await restore();
     if (restored) {
       // Premium restored
+    }
+  };
+
+  const handleUnlockPress = async () => {
+    const result = await openPaywall();
+    if (result === 'fallback') {
+      router.push('/paywall');
     }
   };
 
@@ -67,7 +74,12 @@ export default function ProfileScreen() {
                   <ThemedText style={styles.featureText}>{feature.text}</ThemedText>
                 </View>
               ))}
-              <Button title={`Unlock for ${PREMIUM_PRICE}`} onPress={() => router.push('/paywall')} fullWidth />
+              <Button
+                title={`Unlock for ${PREMIUM_PRICE}`}
+                onPress={handleUnlockPress}
+                fullWidth
+                testID="profile-unlock-button"
+              />
             </View>
           ) : (
             <View style={[styles.premiumCard, { backgroundColor: theme.successLight }]}>
@@ -80,12 +92,22 @@ export default function ProfileScreen() {
 
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>Account</ThemedText>
+            {isPremium ? (
+              <Button
+                title="Manage Subscription"
+                variant="outline"
+                onPress={openCustomerCenter}
+                fullWidth
+                testID="profile-manage-subscription-button"
+              />
+            ) : null}
             <Button
               title="Restore Purchases"
               variant="outline"
               onPress={handleRestore}
               loading={isLoading}
               fullWidth
+              testID="profile-restore-button"
             />
           </View>
 
