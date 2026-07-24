@@ -1,6 +1,24 @@
+import {
+  JetBrainsMono_600SemiBold,
+  useFonts as useMonoFonts,
+} from '@expo-google-fonts/jetbrains-mono';
+import {
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+  Outfit_800ExtraBold,
+  useFonts as useOutfitFonts,
+} from '@expo-google-fonts/outfit';
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  useFonts as usePlusJakartaFonts,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import { DarkTheme, DefaultTheme, Redirect, Stack, ThemeProvider } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 import { hasSeenOnboarding } from '@/lib/onboarding';
@@ -12,6 +30,20 @@ export default function RootLayout() {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
+  const [outfitLoaded] = useOutfitFonts({
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
+    Outfit_800ExtraBold,
+  });
+  const [jakartaLoaded] = usePlusJakartaFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+  });
+  const [monoLoaded] = useMonoFonts({ JetBrainsMono_600SemiBold });
+
   useEffect(() => {
     initialize();
     hasSeenOnboarding().then((seen) => {
@@ -21,7 +53,21 @@ export default function RootLayout() {
   }, [initialize]);
 
   const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
-  const colors = Colors[colorScheme === 'unspecified' ? 'light' : colorScheme];
+  const colors = Colors[colorScheme === 'unspecified' ? 'light' : colorScheme ?? 'light'];
+
+  if (!outfitLoaded || !jakartaLoaded || !monoLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <ThemeProvider

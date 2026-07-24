@@ -4,65 +4,77 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#1A1A2E',
-    background: '#FFFFFF',
-    backgroundElement: '#F4F6F9',
-    backgroundSelected: '#E8ECF2',
-    textSecondary: '#6B7280',
-    primary: '#2563EB',
-    primaryDark: '#1D4ED8',
-    success: '#16A34A',
-    successLight: '#DCFCE7',
-    error: '#DC2626',
-    errorLight: '#FEE2E2',
+    text: '#0A0A0B',
+    background: '#F3F4F6',
+    backgroundElement: '#FFFFFF',
+    backgroundSelected: '#FFF1EA',
+    textSecondary: '#54545E',
+    primary: '#FF4500',
+    primaryDark: '#D93C00',
+    success: '#00A85E',
+    successLight: '#E1F8ED',
+    error: '#E31B54',
+    errorLight: '#FFE9EF',
     warning: '#D97706',
     warningLight: '#FEF3C7',
-    border: '#E5E7EB',
+    premium: '#5B5BD6',
+    premiumLight: '#EEEEFC',
+    border: '#E3E4E8',
+    borderHard: '#0A0A0B',
     card: '#FFFFFF',
     tabBar: '#FFFFFF',
   },
   dark: {
-    text: '#F9FAFB',
-    background: '#0F172A',
-    backgroundElement: '#1E293B',
-    backgroundSelected: '#334155',
-    textSecondary: '#94A3B8',
-    primary: '#3B82F6',
-    primaryDark: '#2563EB',
-    success: '#22C55E',
-    successLight: '#14532D',
-    error: '#EF4444',
-    errorLight: '#7F1D1D',
-    warning: '#F59E0B',
-    warningLight: '#78350F',
-    border: '#334155',
-    card: '#1E293B',
-    tabBar: '#0F172A',
+    text: '#F4F4F6',
+    background: '#0B0B0D',
+    backgroundElement: '#191A1D',
+    backgroundSelected: '#3A2211',
+    textSecondary: '#A2A2AC',
+    primary: '#FF6A33',
+    primaryDark: '#FF4500',
+    success: '#2FE393',
+    successLight: '#0F3D2A',
+    error: '#FF5C85',
+    errorLight: '#3D0F1E',
+    warning: '#FBBF24',
+    warningLight: '#3D2E0A',
+    premium: '#8B8CFF',
+    premiumLight: '#211F3D',
+    border: '#2A2B30',
+    borderHard: '#F4F4F6',
+    card: '#161618',
+    tabBar: '#0B0B0D',
   },
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
-export const Fonts = Platform.select({
-  ios: {
-    sans: 'system-ui',
-    serif: 'ui-serif',
-    rounded: 'ui-rounded',
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+export const Fonts = {
+  displayBlack: 'Outfit_800ExtraBold',
+  displayBold: 'Outfit_700Bold',
+  displaySemiBold: 'Outfit_600SemiBold',
+  displayMedium: 'Outfit_500Medium',
+  bodyBold: 'PlusJakartaSans_700Bold',
+  bodySemiBold: 'PlusJakartaSans_600SemiBold',
+  bodyMedium: 'PlusJakartaSans_500Medium',
+  bodyRegular: 'PlusJakartaSans_400Regular',
+  mono: 'JetBrainsMono_600SemiBold',
+} as const;
+
+export function tactileShadow(color: string, offset: number = 4) {
+  return Platform.select({
+    web: {
+      boxShadow: `${offset}px ${offset}px 0px 0px ${color}`,
+    },
+    default: {
+      shadowColor: color,
+      shadowOffset: { width: offset, height: offset },
+      shadowOpacity: 1,
+      shadowRadius: 0,
+      elevation: offset,
+    },
+  });
+}
 
 export const Spacing = {
   half: 2,

@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -6,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { markOnboardingComplete } from '@/lib/onboarding';
 
@@ -17,6 +19,8 @@ interface Slide {
   title: string;
   body: string;
 }
+
+const HERO_IMAGE = 'https://images.pexels.com/photos/96106/pexels-photo-96106.jpeg';
 
 const SLIDES: Slide[] = [
   {
@@ -57,106 +61,123 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} testID="onboarding-screen">
-      <View style={styles.skipRow}>
-        {!isLast ? (
-          <Pressable onPress={finish} hitSlop={12} style={styles.skipPressable} testID="onboarding-skip-button">
-            <ThemedText type="small" themeColor="textSecondary">
-              Skip
-            </ThemedText>
-          </Pressable>
-        ) : (
-          <View style={styles.skipPressable} />
-        )}
-      </View>
+    <View style={styles.container} testID="onboarding-screen">
+      <Image source={{ uri: HERO_IMAGE }} style={styles.heroImage} contentFit="cover" />
+      <LinearGradient
+        colors={['rgba(11,11,13,0.15)', 'rgba(11,11,13,0.75)', theme.background]}
+        locations={[0, 0.55, 0.72]}
+        style={StyleSheet.absoluteFill}
+      />
 
-      <View style={styles.slide} testID="onboarding-slide">
-        <View style={[styles.iconBadge, { backgroundColor: theme.backgroundElement }]}>
-          <Ionicons name={slide.icon} size={72} color={theme.primary} />
-        </View>
-        <ThemedText style={styles.slideTitle}>{slide.title}</ThemedText>
-        <ThemedText style={[styles.slideBody, { color: theme.textSecondary }]}>
-          {slide.body}
-        </ThemedText>
-      </View>
-
-      <View style={styles.footer}>
-        <View style={styles.dots}>
-          {SLIDES.map((_, i) => (
-            <Pressable key={i} onPress={() => setCurrentIndex(i)} testID={`onboarding-dot-${i}`}>
-              <View
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: i === currentIndex ? theme.primary : theme.border,
-                    width: i === currentIndex ? 24 : 8,
-                  },
-                ]}
-              />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.skipRow}>
+          {!isLast ? (
+            <Pressable onPress={finish} hitSlop={12} style={styles.skipPressable} testID="onboarding-skip-button">
+              <ThemedText type="smallBold" style={{ color: '#FFFFFF' }}>
+                Skip
+              </ThemedText>
             </Pressable>
-          ))}
+          ) : (
+            <View style={styles.skipPressable} />
+          )}
         </View>
 
-        <Button
-          title={isLast ? 'Get Started' : 'Next'}
-          onPress={handleNext}
-          fullWidth
-          testID="onboarding-next-button"
-        />
-      </View>
-    </SafeAreaView>
+        <View style={styles.spacer} />
+
+        <View style={styles.slide} testID="onboarding-slide">
+          <View
+            style={[
+              styles.iconBadge,
+              { backgroundColor: theme.primary, borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 4) },
+            ]}>
+            <Ionicons name={slide.icon} size={36} color="#FFFFFF" />
+          </View>
+          <ThemedText type="title" style={{ color: theme.text }}>
+            {slide.title}
+          </ThemedText>
+          <ThemedText style={[styles.slideBody, { color: theme.textSecondary }]}>{slide.body}</ThemedText>
+        </View>
+
+        <View style={styles.footer}>
+          <View style={styles.dots}>
+            {SLIDES.map((_, i) => (
+              <Pressable key={i} onPress={() => setCurrentIndex(i)} testID={`onboarding-dot-${i}`}>
+                <View
+                  style={[
+                    styles.dot,
+                    {
+                      backgroundColor: i === currentIndex ? theme.primary : theme.border,
+                      width: i === currentIndex ? 28 : 8,
+                    },
+                  ]}
+                />
+              </Pressable>
+            ))}
+          </View>
+
+          <Button
+            title={isLast ? 'Get Started' : 'Next'}
+            onPress={handleNext}
+            fullWidth
+            testID="onboarding-next-button"
+          />
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0B0B0D',
+  },
+  heroImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  safeArea: {
+    flex: 1,
   },
   skipRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
-    alignItems: 'flex-end',
   },
   skipPressable: {
-    padding: Spacing.two,
-    minHeight: 36,
+    minHeight: 32,
     justifyContent: 'center',
+  },
+  spacer: {
+    flex: 1,
   },
   slide: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: Spacing.five,
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
   iconBadge: {
-    width: 152,
-    height: 152,
-    borderRadius: BorderRadius.xl,
+    width: 68,
+    height: 68,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.three,
-  },
-  slideTitle: {
-    fontSize: 30,
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 38,
+    marginBottom: Spacing.one,
   },
   slideBody: {
-    fontSize: 17,
-    lineHeight: 26,
-    textAlign: 'center',
+    fontSize: 16,
+    lineHeight: 23,
+    fontFamily: Fonts.bodyRegular,
   },
   footer: {
     padding: Spacing.four,
+    paddingTop: Spacing.four,
     gap: Spacing.three,
   },
   dots: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
     gap: Spacing.one,
+    alignItems: 'center',
   },
   dot: {
     height: 8,

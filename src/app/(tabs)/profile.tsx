@@ -7,7 +7,7 @@ import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { PREMIUM_PRICE } from '@/constants/categories';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 
@@ -41,36 +41,45 @@ export default function ProfileScreen() {
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
-              <Ionicons name="car" size={32} color="#FFFFFF" />
+            <View
+              style={[
+                styles.avatar,
+                { backgroundColor: theme.primary, borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 4) },
+              ]}>
+              <Ionicons name="car-sport" size={34} color="#FFFFFF" />
             </View>
-            <ThemedText style={styles.title}>PassMate</ThemedText>
+            <ThemedText type="title">PassMate</ThemedText>
             <View
               style={[
                 styles.badge,
                 {
                   backgroundColor: isPremium ? theme.successLight : theme.backgroundElement,
+                  borderColor: isPremium ? theme.success : theme.border,
                 },
               ]}>
               <ThemedText
-                style={[
-                  styles.badgeText,
-                  { color: isPremium ? theme.success : theme.textSecondary },
-                ]}>
+                type="caption"
+                style={{ color: isPremium ? theme.success : theme.textSecondary }}>
                 {isPremium ? 'Premium' : 'Free'}
               </ThemedText>
             </View>
           </View>
 
           {!isPremium ? (
-            <View style={[styles.upgradeCard, { backgroundColor: theme.backgroundElement }]}>
-              <ThemedText style={styles.upgradeTitle}>Upgrade to Premium</ThemedText>
+            <View
+              style={[
+                styles.upgradeCard,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 4) },
+              ]}>
+              <ThemedText type="h3">Upgrade to Premium</ThemedText>
               <ThemedText themeColor="textSecondary">
                 One-time purchase — {PREMIUM_PRICE}
               </ThemedText>
               {FEATURES.map((feature) => (
                 <View key={feature.text} style={styles.featureRow}>
-                  <Ionicons name={feature.icon} size={18} color={theme.primary} />
+                  <View style={[styles.featureIconBadge, { backgroundColor: theme.backgroundSelected }]}>
+                    <Ionicons name={feature.icon} size={16} color={theme.primary} />
+                  </View>
                   <ThemedText style={styles.featureText}>{feature.text}</ThemedText>
                 </View>
               ))}
@@ -82,7 +91,11 @@ export default function ProfileScreen() {
               />
             </View>
           ) : (
-            <View style={[styles.premiumCard, { backgroundColor: theme.successLight }]}>
+            <View
+              style={[
+                styles.premiumCard,
+                { backgroundColor: theme.successLight, borderColor: theme.success },
+              ]}>
               <Ionicons name="checkmark-circle" size={24} color={theme.success} />
               <ThemedText style={[styles.premiumText, { color: theme.success }]}>
                 You have full access to all PassMate features.
@@ -91,7 +104,9 @@ export default function ProfileScreen() {
           )}
 
           <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Account</ThemedText>
+            <ThemedText type="caption" themeColor="textSecondary">
+              Account
+            </ThemedText>
             {isPremium ? (
               <Button
                 title="Manage Subscription"
@@ -111,7 +126,7 @@ export default function ProfileScreen() {
             />
           </View>
 
-          <View style={[styles.info, { backgroundColor: theme.backgroundElement }]}>
+          <View style={[styles.info, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
             <ThemedText type="small" themeColor="textSecondary">
               PassMate helps you prepare for the official DVSA driving theory test. This app is not
               affiliated with or endorsed by the DVSA.
@@ -140,42 +155,41 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
   },
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 76,
+    height: 76,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
   },
   badge: {
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.one,
     borderRadius: BorderRadius.full,
-  },
-  badgeText: {
-    fontSize: 13,
-    fontWeight: '600',
+    borderWidth: 1.5,
   },
   upgradeCard: {
     padding: Spacing.four,
     borderRadius: BorderRadius.lg,
+    borderWidth: 2,
     gap: Spacing.three,
-  },
-  upgradeTitle: {
-    fontSize: 18,
-    fontWeight: '700',
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
   },
+  featureIconBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: BorderRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   featureText: {
     fontSize: 15,
     flex: 1,
+    fontFamily: Fonts.bodyMedium,
   },
   premiumCard: {
     flexDirection: 'row',
@@ -183,20 +197,18 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     padding: Spacing.four,
     borderRadius: BorderRadius.lg,
+    borderWidth: 2,
   },
   premiumText: {
     flex: 1,
-    fontWeight: '600',
+    fontFamily: Fonts.bodyBold,
   },
   section: {
     gap: Spacing.two,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
   info: {
     padding: Spacing.three,
     borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
   },
 });

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { CATEGORY_ICONS } from '@/constants/categories';
 import type { DVSACategory } from '@/constants/categories';
 import { useTheme } from '@/hooks/use-theme';
@@ -27,22 +27,26 @@ export function CategoryCard({
   return (
     <Pressable
       onPress={onPress}
+      testID={`category-card-${category}`}
       style={({ pressed }) => [
         styles.card,
         {
           backgroundColor: theme.card,
-          borderColor: theme.border,
-          opacity: pressed ? 0.9 : 1,
+          borderColor: theme.borderHard,
+          transform: [{ translateY: pressed ? 2 : 0 }],
+          ...(pressed ? {} : tactileShadow(theme.borderHard, 3)),
         },
       ]}>
-      <Ionicons name={iconName} size={24} color={theme.primary} />
+      <View style={[styles.iconBadge, { backgroundColor: theme.backgroundSelected }]}>
+        <Ionicons name={iconName} size={20} color={theme.primary} />
+      </View>
       <ThemedText style={styles.title} numberOfLines={2}>
         {category}
       </ThemedText>
       {questionsAnswered > 0 ? (
         <ProgressBar progress={accuracy} />
       ) : (
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="caption" themeColor="textSecondary">
           Not started
         </ThemedText>
       )}
@@ -54,14 +58,21 @@ const styles = StyleSheet.create({
   card: {
     padding: Spacing.three,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    borderWidth: 2,
     gap: Spacing.two,
     flex: 1,
     minWidth: '45%',
   },
+  iconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
     fontSize: 14,
-    fontWeight: '600',
-    minHeight: 40,
+    fontFamily: Fonts.bodyBold,
+    minHeight: 36,
   },
 });

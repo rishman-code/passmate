@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ThemedText } from '@/components/themed-text';
 import { formatTime } from '@/utils/practice';
@@ -16,15 +16,15 @@ export function Timer({ seconds, warningThreshold = 300 }: TimerProps) {
 
   return (
     <View
+      testID="mock-test-timer"
       style={[
         styles.container,
         {
           backgroundColor: isWarning ? theme.errorLight : theme.backgroundElement,
-          borderColor: isWarning ? theme.error : theme.border,
+          borderColor: isWarning ? theme.error : theme.borderHard,
         },
       ]}>
-      <ThemedText
-        style={[styles.time, { color: isWarning ? theme.error : theme.text }]}>
+      <ThemedText type="code" style={[styles.time, { color: isWarning ? theme.error : theme.text }]}>
         {formatTime(seconds)}
       </ThemedText>
     </View>
@@ -35,12 +35,12 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
+    borderRadius: BorderRadius.full,
+    borderWidth: 2,
   },
   time: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.mono,
     fontVariant: ['tabular-nums'],
   },
 });

@@ -31,7 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FF4500",
           "android": {
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
@@ -39,7 +39,8 @@
         }
       ],
       "expo-secure-store",
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

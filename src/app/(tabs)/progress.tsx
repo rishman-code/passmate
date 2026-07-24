@@ -5,7 +5,7 @@ import { ProgressBar } from '@/components/progress-bar';
 import { StatCard } from '@/components/stat-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useQuestions } from '@/hooks/use-questions';
 import { useTheme } from '@/hooks/use-theme';
 import { useProgressStore } from '@/stores/progress-store';
@@ -31,7 +31,7 @@ export default function ProgressScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <ThemedText style={styles.title}>Your Progress</ThemedText>
+          <ThemedText type="title">Your Progress</ThemedText>
 
           <View style={styles.statsRow}>
             <StatCard label="Questions" value={String(totalAnswered)} />
@@ -42,9 +42,9 @@ export default function ProgressScreen() {
             />
           </View>
 
-          <ThemedText style={styles.sectionTitle}>Category Breakdown</ThemedText>
+          <ThemedText type="h3">Category Breakdown</ThemedText>
           {practisedCategories.length === 0 ? (
-            <View style={[styles.empty, { backgroundColor: theme.backgroundElement }]}>
+            <View style={[styles.empty, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
               <ThemedText themeColor="textSecondary">
                 No practice data yet. Complete some questions to see your weak spots.
               </ThemedText>
@@ -53,7 +53,7 @@ export default function ProgressScreen() {
             practisedCategories.map((cat) => (
               <View
                 key={cat.category}
-                style={[styles.categoryRow, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                style={[styles.categoryRow, { backgroundColor: theme.card, borderColor: theme.borderHard }]}>
                 <View style={styles.categoryHeader}>
                   <ThemedText style={styles.categoryName}>{cat.category}</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
@@ -76,11 +76,11 @@ export default function ProgressScreen() {
 
           {mockTestResults.length > 0 ? (
             <>
-              <ThemedText style={styles.sectionTitle}>Mock Test History</ThemedText>
+              <ThemedText type="h3">Mock Test History</ThemedText>
               {mockTestResults.slice(0, 5).map((result) => (
                 <View
                   key={result.id}
-                  style={[styles.mockResult, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                  style={[styles.mockResult, { backgroundColor: theme.card, borderColor: theme.borderHard }]}>
                   <ThemedText style={styles.mockScore}>
                     {result.score}/{result.total_questions}
                   </ThemedText>
@@ -137,12 +137,13 @@ const styles = StyleSheet.create({
   empty: {
     padding: Spacing.four,
     borderRadius: BorderRadius.lg,
+    borderWidth: 1.5,
     alignItems: 'center',
   },
   categoryRow: {
     padding: Spacing.three,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    borderWidth: 2,
     gap: Spacing.two,
   },
   categoryHeader: {
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.bodyBold,
     flex: 1,
   },
   mockResult: {
@@ -161,15 +162,15 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     padding: Spacing.three,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    borderWidth: 2,
   },
   mockScore: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: Fonts.displayBold,
     width: 80,
   },
   mockStatus: {
-    fontWeight: '700',
+    fontFamily: Fonts.bodyBold,
     fontSize: 15,
   },
 });

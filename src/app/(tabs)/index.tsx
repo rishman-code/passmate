@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -14,7 +16,7 @@ import {
   MOCK_TEST_QUESTION_COUNT,
   PREMIUM_PRICE,
 } from '@/constants/categories';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useQuestions } from '@/hooks/use-questions';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchAllQuestions } from '@/services/questions';
@@ -22,6 +24,8 @@ import { usePracticeStore } from '@/stores/practice-store';
 import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { buildAdaptiveQuestionQueue } from '@/utils/practice';
+
+const BANNER_IMAGE = 'https://images.pexels.com/photos/29909543/pexels-photo-29909543.jpeg';
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -68,7 +72,9 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <ThemedText style={styles.greeting}>PassMate</ThemedText>
+            <ThemedText type="title" style={{ color: theme.text }}>
+              PassMate
+            </ThemedText>
             <ThemedText themeColor="textSecondary">
               Your AI-powered DVSA theory test companion
             </ThemedText>
@@ -77,8 +83,13 @@ export default function HomeScreen() {
           {!isPremium ? (
             <Pressable
               onPress={handleUnlockPress}
-              style={[styles.premiumBanner, { backgroundColor: theme.primary }]}
-              testID="home-unlock-banner">
+              testID="home-unlock-banner"
+              style={[styles.premiumBanner, { borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 4) }]}>
+              <Image source={{ uri: BANNER_IMAGE }} style={StyleSheet.absoluteFill} contentFit="cover" />
+              <LinearGradient
+                colors={['rgba(255,69,0,0.35)', 'rgba(11,11,13,0.88)']}
+                style={StyleSheet.absoluteFill}
+              />
               <Ionicons name="sparkles" size={24} color="#FFFFFF" />
               <View style={styles.premiumText}>
                 <ThemedText style={styles.premiumTitle}>Unlock Full Access</ThemedText>
@@ -100,7 +111,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
+            <ThemedText type="h3">Quick Actions</ThemedText>
             <Button
               title="Start Adaptive Practice"
               onPress={startAdaptivePractice}
@@ -115,7 +126,11 @@ export default function HomeScreen() {
             />
           </View>
 
-          <View style={[styles.mockInfo, { backgroundColor: theme.backgroundElement }]}>
+          <View
+            style={[
+              styles.mockInfo,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            ]}>
             <Ionicons name="timer-outline" size={20} color={theme.primary} />
             <ThemedText type="small" themeColor="textSecondary">
               Mock test: {MOCK_TEST_QUESTION_COUNT} questions, 57 minutes. Pass mark:{' '}
@@ -125,11 +140,14 @@ export default function HomeScreen() {
 
           {weakestCategories.length > 0 ? (
             <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>Weak Spots</ThemedText>
+              <ThemedText type="h3">Weak Spots</ThemedText>
               {weakestCategories.map((cat) => (
                 <View
                   key={cat.category}
-                  style={[styles.weakSpot, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                  style={[
+                    styles.weakSpot,
+                    { backgroundColor: theme.card, borderColor: theme.borderHard },
+                  ]}>
                   <View style={styles.weakSpotHeader}>
                     <ThemedText style={styles.weakSpotTitle}>{cat.category}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
@@ -144,7 +162,11 @@ export default function HomeScreen() {
               ))}
             </View>
           ) : (
-            <View style={[styles.emptyWeak, { backgroundColor: theme.backgroundElement }]}>
+            <View
+              style={[
+                styles.emptyWeak,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+              ]}>
               <ThemedText themeColor="textSecondary">
                 Start practising to identify your weak spots.
               </ThemedText>
@@ -176,16 +198,15 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     paddingTop: Spacing.two,
   },
-  greeting: {
-    fontSize: 32,
-    fontWeight: '700',
-  },
   premiumBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.three,
     borderRadius: BorderRadius.lg,
+    borderWidth: 2,
     gap: Spacing.two,
+    overflow: 'hidden',
+    minHeight: 84,
   },
   premiumText: {
     flex: 1,
@@ -193,12 +214,13 @@ const styles = StyleSheet.create({
   },
   premiumTitle: {
     color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 16,
+    fontFamily: Fonts.displayBold,
+    fontSize: 17,
   },
   premiumSubtitle: {
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.88)',
     fontSize: 13,
+    fontFamily: Fonts.bodyMedium,
   },
   statsRow: {
     flexDirection: 'row',
@@ -207,21 +229,18 @@ const styles = StyleSheet.create({
   section: {
     gap: Spacing.three,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-  },
   mockInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
     padding: Spacing.three,
     borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
   },
   weakSpot: {
     padding: Spacing.three,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    borderWidth: 2,
     gap: Spacing.two,
   },
   weakSpotHeader: {
@@ -231,12 +250,13 @@ const styles = StyleSheet.create({
   },
   weakSpotTitle: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.bodyBold,
     flex: 1,
   },
   emptyWeak: {
     padding: Spacing.four,
     borderRadius: BorderRadius.lg,
+    borderWidth: 1.5,
     alignItems: 'center',
   },
 });

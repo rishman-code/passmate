@@ -1,6 +1,7 @@
-import { ActivityIndicator, Pressable, StyleSheet, type PressableProps } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { Platform, ActivityIndicator, Pressable, StyleSheet, type PressableProps } from 'react-native';
 
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ThemedText } from '@/components/themed-text';
 
@@ -20,6 +21,7 @@ export function Button({
   fullWidth = false,
   disabled,
   style,
+  onPress,
   ...props
 }: ButtonProps) {
   const theme = useTheme();
@@ -38,8 +40,15 @@ export function Button({
     variant === 'primary' || variant === 'danger'
       ? '#FFFFFF'
       : variant === 'outline'
-        ? theme.primary
+        ? theme.text
         : theme.text;
+
+  const handlePress = (event: Parameters<NonNullable<typeof onPress>>[0]) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onPress?.(event);
+  };
 
   return (
     <Pressable
@@ -48,12 +57,15 @@ export function Button({
         fullWidth && styles.fullWidth,
         {
           backgroundColor,
-          borderColor: variant === 'outline' ? theme.primary : backgroundColor,
-          opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1,
+          borderColor: theme.borderHard,
+          opacity: isDisabled ? 0.45 : 1,
+          transform: [{ translateY: pressed && !isDisabled ? 3 : 0 }],
+          ...(pressed && !isDisabled ? {} : tactileShadow(theme.borderHard, 4)),
         },
         typeof style === 'function' ? style({ pressed, hovered }) : style,
       ]}
       disabled={isDisabled}
+      onPress={handlePress}
       {...props}>
       {loading ? (
         <ActivityIndicator color={textColor} />
@@ -66,19 +78,19 @@ export function Button({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: Spacing.three,
+    paddingVertical: 17,
     paddingHorizontal: Spacing.four,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1.5,
+    borderRadius: BorderRadius.full,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 56,
   },
   fullWidth: {
     alignSelf: 'stretch',
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontFamily: Fonts.displaySemiBold,
   },
 });

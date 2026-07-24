@@ -25,7 +25,7 @@ export function ProgressBar({ progress, label, color }: ProgressBarProps) {
           </ThemedText>
         </View>
       ) : null}
-      <View style={[styles.track, { backgroundColor: theme.backgroundElement }]}>
+      <View style={[styles.track, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
         <View
           style={[
             styles.fill,
@@ -49,8 +49,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   track: {
-    height: 8,
+    height: 10,
     borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
     overflow: 'hidden',
   },
   fill: {

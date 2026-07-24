@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ThemedText } from '@/components/themed-text';
 
@@ -20,15 +20,14 @@ export function StatCard({ label, value, subtitle, accentColor }: StatCardProps)
         styles.card,
         {
           backgroundColor: theme.card,
-          borderColor: theme.border,
+          borderColor: theme.borderHard,
+          ...tactileShadow(theme.borderHard, 3),
         },
       ]}>
-      <ThemedText type="small" themeColor="textSecondary">
+      <ThemedText type="caption" themeColor="textSecondary">
         {label}
       </ThemedText>
-      <ThemedText style={[styles.value, accentColor ? { color: accentColor } : undefined]}>
-        {value}
-      </ThemedText>
+      <ThemedText style={[styles.value, { color: accentColor ?? theme.text }]}>{value}</ThemedText>
       {subtitle ? (
         <ThemedText type="small" themeColor="textSecondary">
           {subtitle}
@@ -43,11 +42,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Spacing.three,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    borderWidth: 2,
     gap: Spacing.one,
   },
   value: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 30,
+    fontFamily: Fonts.displayBold,
+    letterSpacing: -0.5,
   },
 });

@@ -10,7 +10,7 @@ import { OptionButton } from '@/components/option-button';
 import { QuestionCard } from '@/components/question-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getAIExplanation } from '@/services/ai-explanations';
 import { usePracticeStore } from '@/stores/practice-store';
@@ -88,12 +88,14 @@ export default function PracticeSessionScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.topBar}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
+          <Pressable onPress={() => router.back()} hitSlop={12} testID="practice-session-close-button">
             <Ionicons name="close" size={28} color={theme.text} />
           </Pressable>
-          <ThemedText type="small" themeColor="textSecondary">
-            {correctCount}/{currentIndex + (showResult ? 1 : 0)} correct
-          </ThemedText>
+          <View style={[styles.scoreChip, { backgroundColor: theme.backgroundElement, borderColor: theme.borderHard }]}>
+            <ThemedText type="code" style={{ color: theme.text }}>
+              {correctCount}/{currentIndex + (showResult ? 1 : 0)}
+            </ThemedText>
+          </View>
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -119,8 +121,10 @@ export default function PracticeSessionScreen() {
           </View>
 
           {showResult && selectedAnswer !== question.correct_answer ? (
-            <View style={[styles.dvsaBox, { backgroundColor: theme.backgroundElement }]}>
-              <ThemedText style={styles.dvsaTitle}>Official Explanation</ThemedText>
+            <View style={[styles.dvsaBox, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+              <ThemedText type="caption" themeColor="textSecondary" style={styles.dvsaTitle}>
+                Official Explanation
+              </ThemedText>
               <ThemedText style={styles.dvsaText}>{question.explanation}</ThemedText>
             </View>
           ) : null}
@@ -137,9 +141,9 @@ export default function PracticeSessionScreen() {
 
         <View style={styles.footer}>
           {isComplete ? (
-            <Button title="Finish Session" onPress={handleFinish} fullWidth />
+            <Button title="Finish Session" onPress={handleFinish} fullWidth testID="practice-finish-button" />
           ) : showResult ? (
-            <Button title="Next Question" onPress={nextQuestion} fullWidth />
+            <Button title="Next Question" onPress={nextQuestion} fullWidth testID="practice-next-question-button" />
           ) : null}
         </View>
       </SafeAreaView>
@@ -168,6 +172,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
   },
+  scoreChip: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+  },
   scroll: {
     padding: Spacing.four,
     gap: Spacing.four,
@@ -179,15 +189,16 @@ const styles = StyleSheet.create({
   dvsaBox: {
     padding: Spacing.three,
     borderRadius: BorderRadius.lg,
+    borderWidth: 1.5,
     gap: Spacing.one,
   },
   dvsaTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    marginBottom: 2,
   },
   dvsaText: {
     fontSize: 15,
     lineHeight: 22,
+    fontFamily: Fonts.bodyRegular,
   },
   footer: {
     padding: Spacing.four,

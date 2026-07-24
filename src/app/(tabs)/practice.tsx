@@ -68,7 +68,7 @@ export default function PracticeScreen() {
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <ThemedText style={styles.title}>Practice</ThemedText>
+            <ThemedText type="title">Practice</ThemedText>
             <ThemedText themeColor="textSecondary">
               Adaptive mode focuses on questions you struggle with.
             </ThemedText>
@@ -81,7 +81,7 @@ export default function PracticeScreen() {
             fullWidth
           />
 
-          <ThemedText style={styles.sectionTitle}>Practice by Category</ThemedText>
+          <ThemedText type="h3">Practice by Category</ThemedText>
           <View style={styles.grid}>
             {DVSA_CATEGORIES.map((category) => {
               const score = categoryScores.find((s) => s.category === category);
@@ -120,14 +120,6 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: Spacing.one,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
   },
   grid: {
     flexDirection: 'row',

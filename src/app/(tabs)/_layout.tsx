@@ -2,22 +2,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts } from '@/constants/theme';
 
 export default function TabLayout() {
   const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme ?? 'light'];
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
+        tabBarLabelStyle: { fontFamily: Fonts.bodyBold, fontSize: 11 },
         tabBarStyle: {
           backgroundColor: colors.tabBar,
-          borderTopColor: colors.border,
+          borderTopColor: colors.borderHard,
+          borderTopWidth: 2,
+          height: 64,
+          paddingTop: 8,
         },
         headerStyle: { backgroundColor: colors.background },
+        headerTitleStyle: { fontFamily: Fonts.displayBold, fontSize: 18, color: colors.text },
         headerTintColor: colors.text,
         headerShadowVisible: false,
       }}>
@@ -25,22 +30,26 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="practice"
         options={{
           title: 'Practice',
-          tabBarIcon: ({ color, size }) => <Ionicons name="book" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'book' : 'book-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="stats-chart" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'stats-chart' : 'stats-chart-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -48,7 +57,9 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

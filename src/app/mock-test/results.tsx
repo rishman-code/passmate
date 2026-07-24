@@ -8,7 +8,7 @@ import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MOCK_TEST_PASS_SCORE, MOCK_TEST_QUESTION_COUNT } from '@/constants/categories';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useMockTestStore } from '@/stores/mock-test-store';
 import { useProgressStore } from '@/stores/progress-store';
@@ -52,7 +52,10 @@ export default function MockTestResultsScreen() {
           <View
             style={[
               styles.resultCircle,
-              { backgroundColor: passed ? theme.successLight : theme.errorLight },
+              {
+                backgroundColor: passed ? theme.successLight : theme.errorLight,
+                borderColor: passed ? theme.success : theme.error,
+              },
             ]}>
             <Ionicons
               name={passed ? 'checkmark-circle' : 'close-circle'}
@@ -61,14 +64,20 @@ export default function MockTestResultsScreen() {
             />
           </View>
 
-          <ThemedText style={styles.title}>{passed ? 'You Passed!' : 'Not Quite'}</ThemedText>
+          <ThemedText type="title" style={styles.title}>
+            {passed ? 'You Passed!' : 'Not Quite'}
+          </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.subtitle}>
             {passed
               ? 'Great work — you met the DVSA pass mark.'
               : `You need ${MOCK_TEST_PASS_SCORE} correct answers to pass.`}
           </ThemedText>
 
-          <View style={[styles.statsCard, { backgroundColor: theme.backgroundElement }]}>
+          <View
+            style={[
+              styles.statsCard,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 4) },
+            ]}>
             <View style={styles.statRow}>
               <ThemedText themeColor="textSecondary">Score</ThemedText>
               <ThemedText style={styles.statValue}>
@@ -121,22 +130,23 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
+    borderWidth: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
     textAlign: 'center',
   },
   subtitle: {
     textAlign: 'center',
     lineHeight: 22,
+    fontFamily: Fonts.bodyRegular,
   },
   statsCard: {
     alignSelf: 'stretch',
     padding: Spacing.four,
     borderRadius: BorderRadius.lg,
+    borderWidth: 2,
     gap: Spacing.three,
   },
   statRow: {
@@ -146,6 +156,6 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.displayBold,
   },
 });

@@ -12,7 +12,7 @@ import {
   MOCK_TEST_PASS_SCORE,
   MOCK_TEST_QUESTION_COUNT,
 } from '@/constants/categories';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchAllQuestions, selectMockTestQuestions } from '@/services/questions';
 import { useMockTestStore } from '@/stores/mock-test-store';
@@ -60,19 +60,31 @@ export default function MockTestIntroScreen() {
       <Stack.Screen options={{ headerShown: true, title: 'Mock Test' }} />
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <View style={styles.content}>
-          <View style={[styles.iconCircle, { backgroundColor: theme.primary }]}>
-            <Ionicons name="timer" size={40} color="#FFFFFF" />
+          <View
+            style={[
+              styles.iconCircle,
+              { backgroundColor: theme.primary, borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 4) },
+            ]}>
+            <Ionicons name="timer" size={38} color="#FFFFFF" />
           </View>
 
-          <ThemedText style={styles.title}>DVSA Mock Test</ThemedText>
+          <ThemedText type="title" style={styles.title}>
+            DVSA Mock Test
+          </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.subtitle}>
             Simulate the real theory test experience with timed conditions.
           </ThemedText>
 
-          <View style={[styles.rulesCard, { backgroundColor: theme.backgroundElement }]}>
+          <View
+            style={[
+              styles.rulesCard,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.borderHard },
+            ]}>
             {RULES.map((rule) => (
               <View key={rule} style={styles.ruleRow}>
-                <Ionicons name="checkmark-circle" size={18} color={theme.primary} />
+                <View style={[styles.ruleIconBadge, { backgroundColor: theme.backgroundSelected }]}>
+                  <Ionicons name="checkmark-circle" size={16} color={theme.primary} />
+                </View>
                 <ThemedText style={styles.ruleText}>{rule}</ThemedText>
               </View>
             ))}
@@ -111,35 +123,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 84,
+    height: 84,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
     textAlign: 'center',
   },
   subtitle: {
     textAlign: 'center',
     lineHeight: 22,
+    fontFamily: Fonts.bodyRegular,
   },
   rulesCard: {
     alignSelf: 'stretch',
     padding: Spacing.four,
     borderRadius: BorderRadius.lg,
-    gap: Spacing.two,
+    borderWidth: 2,
+    gap: Spacing.three,
   },
   ruleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
   },
+  ruleIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: BorderRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   ruleText: {
     fontSize: 15,
     flex: 1,
+    fontFamily: Fonts.bodyMedium,
   },
   premiumNote: {
     textAlign: 'center',
