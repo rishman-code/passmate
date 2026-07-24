@@ -1,45 +1,35 @@
-import Anthropic from '@anthropic-ai/sdk';
-
 import type { Question } from '@/types/database';
 
-const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
+const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL ?? '';
 
-export const isAnthropicConfigured =
-  apiKey.length > 0 && !apiKey.includes('placeholder');
-
-const anthropic = isAnthropicConfigured
-  ? new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
-  : null;
+export const isAIExplanationConfigured = backendUrl.length > 0;
 
 export async function generateAIExplanation(
   question: Question,
   wrongAnswer: string,
 ): Promise<string> {
-  if (!anthropic) {
+  if (!isAIExplanationConfigured) {
     return question.explanation;
   }
 
   const correctOption = question[`option_${question.correct_answer}` as keyof Question] as string;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 300,
-    messages: [
-      {
-        role: 'user',
-        content: `You are a friendly UK driving instructor helping a learner prepare for their DVSA theory test.
-
-Question: ${question.question_text}
-Category: ${question.category}
-Student's wrong answer: ${wrongAnswer}
-Correct answer: ${correctOption}
-Official DVSA explanation: ${question.explanation}
-
-Explain in 2-3 short paragraphs why the student's answer was wrong and why the correct answer is right. Use simple language. Be encouraging, not condescending.`,
-      },
-    ],
+  const response = await fetch(`${backendUrl}/api/ai-explanation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      question_text: question.question_text,
+      category: question.category,
+      wrong_answer_text: wrongAnswer,
+      correct_answer_text: correctOption,
+      official_explanation: question.explanation,
+    }),
   });
 
-  const textBlock = response.content.find((block) => block.type === 'text');
-  return textBlock?.type === 'text' ? textBlock.text : question.explanation;
+  if (!response.ok) {
+    return question.explanation;
+  }
+
+  const data = await response.json();
+  return data.explanation ?? question.explanation;
 }
