@@ -1,0 +1,122 @@
+{
+  "theme": "Light Theme (Tactile High-Contrast)",
+  "concept": "Swiss Arcade Telemetry - A unique fusion of high-end car dashboard clarity, retro arcade tactile buttons, and Swiss transport map precision to overcome the 'boring' app problem.",
+  "typography": {
+    "fonts": {
+      "heading": "Outfit (Geometric, bold, technical - evokes modern car displays)",
+      "body": "Plus Jakarta Sans (Highly legible, clean, modern structure)",
+      "mono": "JetBrains Mono (For test timers, stats, and data points)"
+    },
+    "scales": {
+      "h1": { "fontSize": 36, "lineHeight": 44, "letterSpacing": -1, "fontFamily": "Outfit-Bold" },
+      "h2": { "fontSize": 28, "lineHeight": 34, "letterSpacing": -0.5, "fontFamily": "Outfit-SemiBold" },
+      "h3": { "fontSize": 22, "lineHeight": 28, "fontFamily": "Outfit-Medium" },
+      "bodyLarge": { "fontSize": 18, "lineHeight": 26, "fontFamily": "PlusJakartaSans-Regular" },
+      "body": { "fontSize": 16, "lineHeight": 24, "fontFamily": "PlusJakartaSans-Regular" },
+      "caption": { "fontSize": 13, "lineHeight": 18, "letterSpacing": 0.5, "textTransform": "uppercase", "fontFamily": "PlusJakartaSans-Bold" }
+    }
+  },
+  "colors": {
+    "background": "#F4F5F7",
+    "surface": "#FFFFFF",
+    "surfaceHighlight": "#F9FAFB",
+    "textPrimary": "#090A0B",
+    "textSecondary": "#52525B",
+    "primary": "#FF4500",
+    "primaryPressed": "#E03C00",
+    "success": "#00D26A",
+    "successBg": "#E5F9F0",
+    "error": "#FF3366",
+    "errorBg": "#FFEAF0",
+    "premium": "#6366F1",
+    "border": "#E4E4E7",
+    "borderHard": "#090A0B"
+  },
+  "visual_enhancers": {
+    "borders": "Use 1.5px or 2px solid #090A0B for interactive cards to create a tactile neo-brutalist feel. Avoid soft, muddy drop shadows.",
+    "shadows": {
+      "tactile": {
+        "shadowColor": "#090A0B",
+        "shadowOffset": { "width": 0, "height": 4 },
+        "shadowOpacity": 1,
+        "shadowRadius": 0,
+        "elevation": 4
+      }
+    },
+    "radii": {
+      "card": 16,
+      "button": 9999,
+      "pill": 9999,
+      "input": 12
+    }
+  },
+  "layouts": {
+    "spacing": {
+      "xs": 4, "sm": 8, "md": 16, "lg": 24, "xl": 32, "xxl": 48
+    },
+    "padding": "Generous spacing philosophy. Cards must have a minimum of 20px internal padding. Screen horizontal padding should be 20px or 24px so content breathes."
+  },
+  "components": {
+    "PrimaryButton": {
+      "container": "backgroundColor: primary, borderRadius: 9999, paddingVertical: 18, paddingHorizontal: 24, alignItems: 'center', justifyContent: 'center', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, shadowColor: '#090A0B', borderWidth: 2, borderColor: '#090A0B'",
+      "text": "color: '#FFFFFF', fontSize: 18, fontFamily: 'Outfit-Bold'"
+    },
+    "CategoryCard": {
+      "container": "backgroundColor: surface, borderRadius: 16, padding: 20, borderWidth: 2, borderColor: borderHard, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'",
+      "pressed": "transform: [{ translateY: 2 }], shadowOffset: { width: 0, height: 2 }"
+    },
+    "OptionCard": {
+      "default": "backgroundColor: surface, borderWidth: 1.5, borderColor: border, borderRadius: 12, padding: 16, marginBottom: 12",
+      "selected": "borderColor: primary, backgroundColor: '#FFF0EC', borderWidth: 2",
+      "correct": "borderColor: success, backgroundColor: successBg, borderWidth: 2",
+      "incorrect": "borderColor: error, backgroundColor: errorBg, borderWidth: 2"
+    },
+    "AIExplanationBox": {
+      "container": "backgroundColor: '#EEF2FF', borderWidth: 1.5, borderColor: premium, borderRadius: 16, padding: 20, marginTop: 16, borderLeftWidth: 6"
+    },
+    "Header": {
+      "container": "backgroundColor: background, paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: border"
+    }
+  },
+  "iconography": "Use bold, consistent vector icons (e.g., Lucide React Native or Phosphor). Ensure stroke widths match the typography weight (usually 2px stroke). Do not mix filled and outlined icons arbitrarily.",
+  "motion": {
+    "buttons": "Active opacity 0.8, scale down slightly (0.97) on press to mimic physical tactile feedback.",
+    "pageTransition": "Use standard slide animations, but consider a fast 150ms-200ms fade for rapid quiz questions to keep momentum.",
+    "progressBars": "Animate width changes using Reanimated or LayoutAnimation for smooth transitions when users answer questions."
+  },
+  "media": {
+    "image_urls": [
+      {
+        "url": "https://images.pexels.com/photos/96106/pexels-photo-96106.jpeg",
+        "category": "Onboarding / Paywall Hero",
+        "description": "Empty scenic road landscape, representing the freedom of passing the theory test."
+      },
+      {
+        "url": "https://images.pexels.com/photos/29909543/pexels-photo-29909543.jpeg",
+        "category": "Premium Upsell / Dashboard Background",
+        "description": "Close-up of a modern steering wheel, evoking tactile, technical driving precision."
+      }
+    ]
+  },
+  "accessibility": {
+    "contrast": "All text combinations exceed 4.5:1 WCAG AA. Primary Orange (#FF4500) against stark white cards is verified for visibility.",
+    "touchTargets": "Minimum 48x48px for all interactive elements (buttons, back arrows, toggles).",
+    "testIDs": "CRITICAL: Append testID (for React Native) mapping to data-testid prop to all touchables, e.g., testID='start-practice-button'."
+  },
+  "instructions_to_main_agent": [
+    "Translate this JSON strictly into React Native StyleSheet objects. Do not use Tailwind CSS web classes as this is an Expo/React Native app.",
+    "Implement 'Neo-Brutalism Light' for main action buttons and active cards: use solid borders (borderWidth: 2, borderColor: '#090A0B') and sharp, zero-radius drop shadows (e.g. { shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0 }) to create a highly tactile, gamified feel.",
+    "Use layout dimensions dynamically but keep massive padding on container elements (minimum 20px internally).",
+    "Make the gamified learning loop clear by highlighting correct (emerald) and incorrect (neon rose) states boldly. The user should instantly know their result.",
+    "For the AI explanation, use a distinct UI treatment (indigo borders, subtle purple/indigo background) to differentiate it from standard DVSA content and highlight the premium value.",
+    "Timer on the mock test should use the monospaced font and be fixed/sticky at the top.",
+    "Load @expo-google-fonts/outfit and @expo-google-fonts/plus-jakarta-sans."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Avoid standard React Native 'boring' generic defaults. Go for high contrast and strong borders to create personality.",
+    "All interactive elements MUST include a `testID` (which maps to `data-testid` on React Native Web) attribute to facilitate automated testing.",
+    "Never use purely transparent backgrounds for sticky elements/headers. Always use solid backgrounds (like #F4F5F7) so text underneath doesn't collide.",
+    "Do not use emoji characters for UI icons; rely on proper vector icon libraries.",
+    "Create depth through layered design elements with z-index hierarchy."
+  ]
+}
