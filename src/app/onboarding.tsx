@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -38,11 +38,10 @@ const SLIDES: Slide[] = [
 
 export default function OnboardingScreen() {
   const theme = useTheme();
-  const { width } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList<Slide>>(null);
 
   const isLast = currentIndex === SLIDES.length - 1;
+  const slide = SLIDES[currentIndex];
 
   const finish = async () => {
     await markOnboardingComplete();
@@ -53,18 +52,15 @@ export default function OnboardingScreen() {
     if (isLast) {
       finish();
     } else {
-      flatListRef.current?.scrollToOffset({
-        offset: (currentIndex + 1) * width,
-        animated: true,
-      });
+      setCurrentIndex((i) => i + 1);
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} testID="onboarding-screen">
       <View style={styles.skipRow}>
         {!isLast ? (
-          <Pressable onPress={finish} hitSlop={12} style={styles.skipPressable}>
+          <Pressable onPress={finish} hitSlop={12} style={styles.skipPressable} testID="onboarding-skip-button">
             <ThemedText type="small" themeColor="textSecondary">
               Skip
             </ThemedText>
@@ -74,49 +70,39 @@ export default function OnboardingScreen() {
         )}
       </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={SLIDES}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        bounces={false}
-        scrollEventThrottle={16}
-        keyExtractor={(_, i) => String(i)}
-        onMomentumScrollEnd={(e) => {
-          const index = Math.round(e.nativeEvent.contentOffset.x / width);
-          setCurrentIndex(index);
-        }}
-        renderItem={({ item }) => (
-          <View style={[styles.slide, { width }]}>
-            <View style={[styles.iconBadge, { backgroundColor: theme.backgroundElement }]}>
-              <Ionicons name={item.icon} size={72} color={theme.primary} />
-            </View>
-            <ThemedText style={styles.slideTitle}>{item.title}</ThemedText>
-            <ThemedText style={[styles.slideBody, { color: theme.textSecondary }]}>
-              {item.body}
-            </ThemedText>
-          </View>
-        )}
-      />
+      <View style={styles.slide} testID="onboarding-slide">
+        <View style={[styles.iconBadge, { backgroundColor: theme.backgroundElement }]}>
+          <Ionicons name={slide.icon} size={72} color={theme.primary} />
+        </View>
+        <ThemedText style={styles.slideTitle}>{slide.title}</ThemedText>
+        <ThemedText style={[styles.slideBody, { color: theme.textSecondary }]}>
+          {slide.body}
+        </ThemedText>
+      </View>
 
       <View style={styles.footer}>
         <View style={styles.dots}>
           {SLIDES.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor: i === currentIndex ? theme.primary : theme.border,
-                  width: i === currentIndex ? 24 : 8,
-                },
-              ]}
-            />
+            <Pressable key={i} onPress={() => setCurrentIndex(i)} testID={`onboarding-dot-${i}`}>
+              <View
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor: i === currentIndex ? theme.primary : theme.border,
+                    width: i === currentIndex ? 24 : 8,
+                  },
+                ]}
+              />
+            </Pressable>
           ))}
         </View>
 
-        <Button title={isLast ? 'Get Started' : 'Next'} onPress={handleNext} fullWidth />
+        <Button
+          title={isLast ? 'Get Started' : 'Next'}
+          onPress={handleNext}
+          fullWidth
+          testID="onboarding-next-button"
+        />
       </View>
     </SafeAreaView>
   );
@@ -137,6 +123,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   slide: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.five,
