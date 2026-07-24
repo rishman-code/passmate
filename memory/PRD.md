@@ -38,8 +38,15 @@ Onboarding → Home (bug-fixed quick action, real Supabase questions) → Practi
 - Final result: **714 total questions, 51 per category across all 14 DVSA categories** — now in line with competitor apps.
 - `backend/.env` now has both `EMERGENT_LLM_KEY` and `ANTHROPIC_API_KEY` (the latter takes priority in code).
 
+## Session 4 (2026-07-24) — onboarding "Next" button bug fix
+- User reported: clicking "Next" on the onboarding carousel didn't advance to the next slide.
+- Root cause: `src/app/onboarding.tsx` used a horizontal-paging `FlatList` + `scrollToOffset()` + `onMomentumScrollEnd` to track slide index. On react-native-web, `onMomentumScrollEnd` doesn't reliably fire for programmatic `scrollToOffset` calls, so `currentIndex` state desynced from the visible slide.
+- Fix: removed FlatList entirely, replaced with plain state-driven rendering (`SLIDES[currentIndex]`), `Next` just calls `setCurrentIndex(i => i+1)`. Added testIDs (`onboarding-next-button`, `onboarding-skip-button`, `onboarding-dot-0/1/2`, etc.) and made dots directly tappable (bonus UX).
+- Verified by testing_agent: 100% pass — Next advances all 3 slides correctly, label switches to "Get Started" on slide 3, navigates to Home, Skip still works and persists across reload.
+
 ## Next Action Items
-- Optional: add data-testid/accessibility props across interactive elements.
+- Optional: add data-testid/accessibility props across remaining interactive elements (options, quick actions, tab bar).
 - Optional: render AI explanation markdown properly.
 - Optional: spot-check a larger random sample of the 595 newly generated questions for factual accuracy (currently only manually reviewed a handful per category).
 - Ask user if/when they want RevenueCat wired for real IAP.
+- Consider adding a "flag this question" reporting feature (suggested, not yet built).
