@@ -62,3 +62,19 @@ Onboarding → Home (bug-fixed quick action, real Supabase questions) → Practi
 - Optional: render AI explanation markdown properly.
 - Optional: spot-check a larger random sample of the 595 newly generated questions for factual accuracy (currently only manually reviewed a handful per category).
 - Consider adding a "flag this question" reporting feature (suggested, not yet built).
+
+## Session 6 (2026-07-24) — Full UI redesign
+- User: "it looks a bit boring... redesign the UI so it's more in line with successful apps on the app store." Called design_agent → produced a Neo-Brutalist tactile design system: orange `#FF4500` primary, hard 2px black borders, offset drop shadows (no blur), Outfit (display/headings) + Plus Jakarta Sans (body) + JetBrains Mono (numbers/timer) fonts, pill-shaped buttons, indigo accent for premium/AI features. Full guidelines in `/app/design_guidelines.json`.
+- Installed `@expo-google-fonts/outfit`, `@expo-google-fonts/plus-jakarta-sans`, `@expo-google-fonts/jetbrains-mono`. Fonts loaded via `useFonts` in `src/app/_layout.tsx` (shows spinner until ready, avoiding flash-of-unstyled-text).
+- Rewrote `src/constants/theme.ts` (new Colors light+dark, Fonts, `tactileShadow()` helper) and every shared component (`themed-text`, `button`, `stat-card`, `progress-bar`, `category-card`, `option-button`, `question-card`, `ai-explanation`, `timer`) plus every screen (onboarding, tabs `_layout`, Home, Practice, Progress, Profile, paywall, mock-test intro/results, practice/session) — visual-only changes, no logic/business-flow changes.
+- Added hero/banner photography (Pexels: scenic road for onboarding + paywall hero, steering wheel close-up for Home premium banner) with `expo-linear-gradient` overlays for legibility.
+- Updated `app.json` splash screen background to match new primary orange.
+- Verified via testing_agent: **100% pass**, zero regressions — all previously-fixed flows (onboarding Next, adaptive practice loading, RevenueCat fallback paywall, AI explanations) still work correctly under the new visual design. Fonts confirmed loading correctly (not falling back to system fonts).
+
+## Next Action Items (updated)
+- RevenueCat dashboard setup (entitlement, product, offering, Android key) + real device testing — still pending from Session 5.
+- Optional: add data-testid/accessibility props across remaining interactive elements.
+- Optional: render AI explanation markdown properly (still shows literal `##`/`**`).
+- Optional: spot-check a larger random sample of the 595 newly generated questions for factual accuracy.
+- Consider adding a "flag this question" reporting feature.
+- Optional: extend dark-mode theme testing (redesign focused on light theme, dark theme adapted but not deeply tested).
