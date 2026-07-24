@@ -44,9 +44,21 @@ Onboarding → Home (bug-fixed quick action, real Supabase questions) → Practi
 - Fix: removed FlatList entirely, replaced with plain state-driven rendering (`SLIDES[currentIndex]`), `Next` just calls `setCurrentIndex(i => i+1)`. Added testIDs (`onboarding-next-button`, `onboarding-skip-button`, `onboarding-dot-0/1/2`, etc.) and made dots directly tappable (bonus UX).
 - Verified by testing_agent: 100% pass — Next advances all 3 slides correctly, label switches to "Get Started" on slide 3, navigates to Home, Skip still works and persists across reload.
 
-## Next Action Items
+## Session 5 (2026-07-24) — RevenueCat SDK integration (iOS + Android)
+- User initially asked for native SwiftUI/Swift Package Manager RevenueCat integration — corrected: PassMate is an Expo/React Native managed app (no `ios/` native folder), so integration goes through `react-native-purchases` + `react-native-purchases-ui` (RN bridge to the same RevenueCat backend), not Swift.
+- Installed `react-native-purchases-ui` (react-native-purchases was already present). Configured with user's key `test_bYzKZfKoVYWguBSCNwynsbyDGDk` for BOTH `EXPO_PUBLIC_REVENUECAT_IOS_KEY` and `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` in root `.env` (user only supplied one key — should get a separate Android public key from the RevenueCat dashboard when ready and I'll swap it in).
+- Entitlement ID: `PassMate Pro`. Product ID: `lifetime` (one-time non-consumable).
+- Added `android.package: "com.passmate.app"` to `app.json` (was missing, required for Android builds/RevenueCat Android SDK).
+- Architecture: platform-split `src/lib/revenuecat.ts` (native iOS/Android impl using `react-native-purchases` + `react-native-purchases-ui`: configure, getCustomerInfo, hasProEntitlement, getLifetimePackage, purchaseLifetime, restorePurchases, presentPaywall via `RevenueCatUI.presentPaywallIfNeeded`, presentCustomerCenter via `RevenueCatUI.presentCustomerCenter`) vs `src/lib/revenuecat.web.ts` (web stub — Metro auto-resolves this on web via the `.web.ts` convention, never imports `react-native-purchases-ui` since it has no web support, `isRevenueCatConfigured` hardcoded false so calling code always falls back to the custom `/paywall` screen on web).
+- `src/stores/subscription-store.ts`: added `openPaywall()` (native paywall if configured, else `'fallback'` signal) and `openCustomerCenter()`.
+- `src/app/(tabs)/index.tsx` + `src/app/(tabs)/profile.tsx`: unlock buttons now call `openPaywall()` first, falling back to the existing custom `/paywall` route on web/dev. Profile gained a "Manage Subscription" button (Customer Center) shown only when premium.
+- **Not testable in this environment**: actual native purchase flow (`presentPaywall`, `presentCustomerCenter`, real App Store/Play Store purchases) requires an EAS development build on a physical device — this preview environment has no native iOS/Android runtime. Verified via testing_agent (100% pass) that: web bundling has no regressions from the new native packages, and the dev/web fallback paywall flow works end-to-end.
+- Minor cleanup applied post-test: removed dead `react-native-purchases` import from `revenuecat.web.ts`.
+
+## Next Action Items (updated)
+- User needs to finish RevenueCat dashboard setup: create the `PassMate Pro` entitlement, a `lifetime` one-time product, an Offering containing it, and (ideally) a separate Android public API key.
+- Real purchase flow must be tested via `eas build --profile development --platform ios` (and `android`) on a physical device with RevenueCat sandbox testers — cannot be done in this web preview.
 - Optional: add data-testid/accessibility props across remaining interactive elements (options, quick actions, tab bar).
 - Optional: render AI explanation markdown properly.
 - Optional: spot-check a larger random sample of the 595 newly generated questions for factual accuracy (currently only manually reviewed a handful per category).
-- Ask user if/when they want RevenueCat wired for real IAP.
 - Consider adding a "flag this question" reporting feature (suggested, not yet built).
