@@ -22,11 +22,15 @@ import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 import { hasSeenOnboarding } from '@/lib/onboarding';
+import { useAuthStore } from '@/stores/auth-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const initialize = useSubscriptionStore((s) => s.initialize);
+  const initializeAuth = useAuthStore((s) => s.initialize);
+  const authLoading = useAuthStore((s) => s.isLoading);
+  const session = useAuthStore((s) => s.session);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
@@ -46,16 +50,17 @@ export default function RootLayout() {
 
   useEffect(() => {
     initialize();
+    initializeAuth();
     hasSeenOnboarding().then((seen) => {
       setNeedsOnboarding(!seen);
       setOnboardingChecked(true);
     });
-  }, [initialize]);
+  }, [initialize, initializeAuth]);
 
   const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
   const colors = Colors[colorScheme === 'unspecified' ? 'light' : colorScheme ?? 'light'];
 
-  if (!outfitLoaded || !jakartaLoaded || !monoLoaded) {
+  if (!outfitLoaded || !jakartaLoaded || !monoLoaded || authLoading) {
     return (
       <View
         style={{
@@ -83,6 +88,7 @@ export default function RootLayout() {
         },
       }}>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="auth" />
         <Stack.Screen name="onboarding" options={{ animation: 'none', gestureEnabled: false }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
@@ -100,7 +106,8 @@ export default function RootLayout() {
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
       </Stack>
-      {onboardingChecked && needsOnboarding && <Redirect href="/onboarding" />}
+      {!session && <Redirect href="/auth/sign-in" />}
+      {session && onboardingChecked && needsOnboarding && <Redirect href="/onboarding" />}
     </ThemeProvider>
   );
 }

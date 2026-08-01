@@ -9,6 +9,9 @@ import { ThemedView } from '@/components/themed-view';
 import { PREMIUM_PRICE } from '@/constants/categories';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { signOut } from '@/lib/auth';
+import { useAuthStore } from '@/stores/auth-store';
+import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 
 const FEATURES = [
@@ -21,6 +24,10 @@ const FEATURES = [
 export default function ProfileScreen() {
   const theme = useTheme();
   const { isPremium, isLoading, restore, openPaywall, openCustomerCenter } = useSubscriptionStore();
+  const user = useAuthStore((s) => s.user);
+  const resetProgress = useProgressStore((s) => s.reset);
+
+  const displayName = (user?.user_metadata?.name as string | undefined) ?? user?.email ?? 'Account';
 
   const handleRestore = async () => {
     const restored = await restore();
@@ -36,6 +43,12 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    resetProgress();
+    router.replace('/auth/sign-in');
+  };
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -46,9 +59,12 @@ export default function ProfileScreen() {
                 styles.avatar,
                 { backgroundColor: theme.primary, borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 4) },
               ]}>
-              <Ionicons name="car-sport" size={34} color="#FFFFFF" />
+              <Ionicons name="person" size={34} color="#FFFFFF" />
             </View>
-            <ThemedText type="title">PassMate</ThemedText>
+            <ThemedText type="title">{displayName}</ThemedText>
+            {user?.email ? (
+              <ThemedText type="small" themeColor="textSecondary">{user.email}</ThemedText>
+            ) : null}
             <View
               style={[
                 styles.badge,
@@ -123,6 +139,13 @@ export default function ProfileScreen() {
               loading={isLoading}
               fullWidth
               testID="profile-restore-button"
+            />
+            <Button
+              title="Sign Out"
+              variant="outline"
+              onPress={handleSignOut}
+              fullWidth
+              testID="profile-sign-out-button"
             />
           </View>
 

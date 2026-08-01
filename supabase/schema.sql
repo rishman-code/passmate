@@ -14,11 +14,12 @@ create table if not exists questions (
 );
 
 create table if not exists user_progress (
+  user_id uuid not null references auth.users(id) on delete cascade,
   question_id text not null references questions(id),
   answered_correctly boolean not null,
   answered_at timestamptz not null default now(),
   attempt_count integer not null default 1,
-  primary key (question_id)
+  primary key (user_id, question_id)
 );
 
 create table if not exists ai_explanation_cache (
@@ -29,6 +30,7 @@ create table if not exists ai_explanation_cache (
 
 create table if not exists mock_test_results (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
   score integer not null,
   total_questions integer not null,
   passed boolean not null,
