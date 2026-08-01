@@ -1,4 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { MockTestResult, UserProgress } from '@/types/database';
 
@@ -11,50 +13,60 @@ interface ProgressState {
   getOverallAccuracy: () => number;
 }
 
-export const useProgressStore = create<ProgressState>((set, get) => ({
-  progress: {},
-  mockTestResults: [],
+export const useProgressStore = create<ProgressState>()(
+  persist(
+    (set, get) => ({
+      progress: {},
+      mockTestResults: [],
 
-  recordAnswer: (questionId, correct) => {
-    set((state) => {
-      const existing = state.progress[questionId];
-      const updated: UserProgress = {
-        question_id: questionId,
-        answered_correctly: correct,
-        answered_at: new Date().toISOString(),
-        attempt_count: (existing?.attempt_count ?? 0) + 1,
-      };
+      recordAnswer: (questionId, correct) => {
+        set((state) => {
+          const existing = state.progress[questionId];
+          const updated: UserProgress = {
+            question_id: questionId,
+            answered_correctly: correct,
+            answered_at: new Date().toISOString(),
+            attempt_count: (existing?.attempt_count ?? 0) + 1,
+          };
 
-      return {
-        progress: {
-          ...state.progress,
-          [questionId]: updated,
-        },
-      };
-    });
-  },
+          return {
+            progress: {
+              ...state.progress,
+              [questionId]: updated,
+            },
+          };
+        });
+      },
 
-  recordMockTestResult: (result) => {
-    set((state) => ({
-      mockTestResults: [
-        {
-          ...result,
-          id: `mock-${Date.now()}`,
-        },
-        ...state.mockTestResults,
-      ],
-    }));
-  },
+      recordMockTestResult: (result) => {
+        set((state) => ({
+          mockTestResults: [
+            {
+              ...result,
+              id: `mock-${Date.now()}`,
+            },
+            ...state.mockTestResults,
+          ],
+        }));
+      },
 
-  getTotalAnswered: () => Object.keys(get().progress).length,
+      getTotalAnswered: () => Object.keys(get().progress).length,
 
-  getOverallAccuracy: () => {
-    const entries = Object.values(get().progress);
-    if (entries.length === 0) {
-      return 0;
-    }
-
-    const correct = entries.filter((e) => e.answered_correctly).length;
-    return Math.round((correct / entries.length) * 100);
-  },
-}));
+      getOverallAccuracy: () => {
+        const entries = Object.values(get().progress);
+        if (entries.length === 0) return 0;
+        const correct = entries.filter((e) => e.answered_correctly).length;
+        return Math.round((correct / entries.length) * 100);
+      },
+    }),
+    {
+      name: 'passmate-progress',
+      storage: createJSONStorage(() => AsyncStorage),
+      // Only serialise data fields — functions are re-created by Zustand
+      partialize: (state) => ({
+        progress: state.progress,
+        mockTestResults: state.mockTestResults,
+      }),
+    },
+  ),
+);
