@@ -2,6 +2,16 @@ import { generateAIExplanation } from '@/lib/anthropic';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { AIExplanationCache, Question } from '@/types/database';
 
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/^#{1,6}\s+/gm, '')   // headings
+    .replace(/\*\*(.+?)\*\*/g, '$1') // bold
+    .replace(/\*(.+?)\*/g, '$1')     // italic
+    .replace(/`(.+?)`/g, '$1')       // inline code
+    .replace(/^\s*[-*]\s+/gm, '')    // bullet points
+    .trim();
+}
+
 const memoryCache = new Map<string, string>();
 
 export async function getAIExplanation(question: Question): Promise<string> {
@@ -21,7 +31,7 @@ export async function getAIExplanation(question: Question): Promise<string> {
     }
   }
 
-  const explanation = await generateAIExplanation(question);
+  const explanation = stripMarkdown(await generateAIExplanation(question));
   memoryCache.set(question.id, explanation);
 
   if (isSupabaseConfigured) {

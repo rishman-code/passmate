@@ -20,7 +20,7 @@ export async function generateAIExplanation(question: Question): Promise<string>
     messages: [
       {
         role: 'user',
-        content: `You are a UK driving theory test instructor. In 2-3 clear sentences, explain why "${correctText}" is the correct answer to the question below. Build on the official DVSA explanation but make it more memorable for a learner.
+        content: `You are a UK driving theory test instructor. In 2-3 clear sentences, explain why "${correctText}" is the correct answer to the question below. Build on the official DVSA explanation but make it more memorable for a learner. Write in plain prose — no markdown, no bullet points, no headers, no bold or italic formatting.
 
 Question: ${question.question_text}
 Category: ${question.category}

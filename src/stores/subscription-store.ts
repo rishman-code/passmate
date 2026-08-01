@@ -31,6 +31,11 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   initialize: async () => {
     set({ isLoading: true, error: null });
 
+    if (!isRevenueCatConfigured) {
+      set({ isPremium: true, isLoading: false });
+      return;
+    }
+
     try {
       await initializeRevenueCat();
       const customerInfo = await getCustomerInfo();
