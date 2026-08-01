@@ -43,7 +43,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "expo start --web --port 3000",

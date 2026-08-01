@@ -47,3 +47,7 @@ example
 *.env
 credentials.json
 .credentials
+
+# DVSA question bank source files (large binaries)
+wetransfer_*.zip
+wetransfer_extracted/
