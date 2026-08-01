@@ -62,7 +62,7 @@ export function Button({
           transform: [{ translateY: pressed && !isDisabled ? 3 : 0 }],
           ...(pressed && !isDisabled ? {} : tactileShadow(theme.borderHard, 4)),
         },
-        typeof style === 'function' ? style({ pressed }) : style,
+        typeof style === 'function' ? style({ pressed, hovered: false }) : style,
       ]}
       disabled={isDisabled}
       onPress={handlePress}
