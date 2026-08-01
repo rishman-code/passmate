@@ -43,6 +43,8 @@ export default function PracticeSessionScreen() {
   const question = questions[currentIndex] ?? null;
   const isLastQuestion = currentIndex >= questions.length - 1;
   const isComplete = showResult && isLastQuestion;
+  const answeredCount = currentIndex + (showResult ? 1 : 0);
+  const sessionProgress = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0;
 
   useEffect(() => {
     if (!showResult || !question || !selectedAnswer) {
@@ -86,9 +88,13 @@ export default function PracticeSessionScreen() {
           </Pressable>
           <View style={[styles.scoreChip, { backgroundColor: theme.backgroundElement, borderColor: theme.borderHard }]}>
             <ThemedText type="code" style={{ color: theme.text }}>
-              {correctCount}/{currentIndex + (showResult ? 1 : 0)}
+              {answeredCount === 0 ? '—' : `${correctCount}/${answeredCount}`}
             </ThemedText>
           </View>
+        </View>
+
+        <View style={[styles.progressTrack, { backgroundColor: theme.border }]}>
+          <View style={[styles.progressFill, { backgroundColor: theme.primary, width: `${sessionProgress}%` }]} />
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -161,6 +167,13 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
     borderRadius: BorderRadius.full,
     borderWidth: 1.5,
+  },
+  progressTrack: {
+    height: 3,
+    width: '100%',
+  },
+  progressFill: {
+    height: '100%',
   },
   scroll: {
     padding: Spacing.four,

@@ -29,7 +29,7 @@ export function AIExplanation({
         <View style={styles.content}>
           <ThemedText style={[styles.title, { color: theme.premium }]}>AI Explanation</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Unlock premium for personalised explanations when you get a question wrong.
+            Unlock premium for personalised explanations after every answer.
           </ThemedText>
           {onUnlock ? (
             <ThemedText type="linkPrimary" style={{ color: theme.premium }} onPress={onUnlock}>
