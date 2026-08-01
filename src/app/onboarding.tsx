@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B0B0D',
   },
   heroImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   safeArea: {
     flex: 1,
