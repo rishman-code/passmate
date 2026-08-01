@@ -27,7 +27,6 @@ export interface CategoryScore {
 
 export interface AIExplanationCache {
   question_id: string;
-  wrong_answer: string;
   ai_explanation: string;
   created_at: string;
 }

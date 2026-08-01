@@ -57,17 +57,10 @@ export default function PracticeSessionScreen() {
       recordAnswer(question.id, isCorrect);
     }
 
-    const isCorrect = selectedAnswer === question.correct_answer;
-    if (!isCorrect) {
-      setAiLoading(true);
-      const wrongText = getOptionText(question, selectedAnswer);
-      getAIExplanation(question, wrongText)
-        .then(setAiExplanation)
-        .finally(() => setAiLoading(false));
-    } else {
-      setAiExplanation(null);
-      setAiLoading(false);
-    }
+    setAiLoading(true);
+    getAIExplanation(question)
+      .then(setAiExplanation)
+      .finally(() => setAiLoading(false));
   }, [showResult, question, selectedAnswer, currentIndex, recordAnswer]);
 
   if (!question || questions.length === 0) {
@@ -120,16 +113,7 @@ export default function PracticeSessionScreen() {
             ))}
           </View>
 
-          {showResult && selectedAnswer !== question.correct_answer ? (
-            <View style={[styles.dvsaBox, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-              <ThemedText type="caption" themeColor="textSecondary" style={styles.dvsaTitle}>
-                Official Explanation
-              </ThemedText>
-              <ThemedText style={styles.dvsaText}>{question.explanation}</ThemedText>
-            </View>
-          ) : null}
-
-          {showResult && selectedAnswer !== question.correct_answer ? (
+          {showResult ? (
             <AIExplanation
               explanation={aiExplanation}
               isLoading={aiLoading}

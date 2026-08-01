@@ -22,11 +22,9 @@ create table if not exists user_progress (
 );
 
 create table if not exists ai_explanation_cache (
-  question_id text not null references questions(id),
-  wrong_answer text not null,
+  question_id text primary key references questions(id) on delete cascade,
   ai_explanation text not null,
-  created_at timestamptz not null default now(),
-  primary key (question_id, wrong_answer)
+  created_at timestamptz not null default now()
 );
 
 create table if not exists mock_test_results (

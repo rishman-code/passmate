@@ -1,35 +1,35 @@
+import Anthropic from '@anthropic-ai/sdk';
+
 import type { Question } from '@/types/database';
 
-const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL ?? '';
+const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
 
-export const isAIExplanationConfigured = backendUrl.length > 0;
+export const isAIConfigured = apiKey.length > 0 && apiKey !== 'placeholder';
 
-export async function generateAIExplanation(
-  question: Question,
-  wrongAnswer: string,
-): Promise<string> {
-  if (!isAIExplanationConfigured) {
+export async function generateAIExplanation(question: Question): Promise<string> {
+  if (!isAIConfigured) {
     return question.explanation;
   }
 
-  const correctOption = question[`option_${question.correct_answer}` as keyof Question] as string;
+  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+  const correctText = question[`option_${question.correct_answer}` as keyof Question] as string;
 
-  const response = await fetch(`${backendUrl}/api/ai-explanation`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      question_text: question.question_text,
-      category: question.category,
-      wrong_answer_text: wrongAnswer,
-      correct_answer_text: correctOption,
-      official_explanation: question.explanation,
-    }),
+  const message = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 200,
+    messages: [
+      {
+        role: 'user',
+        content: `You are a UK driving theory test instructor. In 2-3 clear sentences, explain why "${correctText}" is the correct answer to the question below. Build on the official DVSA explanation but make it more memorable for a learner.
+
+Question: ${question.question_text}
+Category: ${question.category}
+Correct answer: ${correctText}
+DVSA explanation: ${question.explanation}`,
+      },
+    ],
   });
 
-  if (!response.ok) {
-    return question.explanation;
-  }
-
-  const data = await response.json();
-  return data.explanation ?? question.explanation;
+  const block = message.content[0];
+  return block.type === 'text' ? block.text : question.explanation;
 }
