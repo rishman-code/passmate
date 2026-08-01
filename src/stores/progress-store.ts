@@ -5,10 +5,17 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { supabase } from '@/lib/supabase';
 import type { MockTestResult, UserProgress } from '@/types/database';
 
+function localDateStr(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 interface ProgressState {
   userId: string | null;
   progress: Record<string, UserProgress>;
   mockTestResults: MockTestResult[];
+  currentStreak: number;
+  longestStreak: number;
+  lastActiveDate: string | null;
   setUserId: (userId: string | null) => void;
   loadFromSupabase: (userId: string) => Promise<void>;
   recordAnswer: (questionId: string, correct: boolean) => void;
@@ -24,6 +31,9 @@ export const useProgressStore = create<ProgressState>()(
       userId: null,
       progress: {},
       mockTestResults: [],
+      currentStreak: 0,
+      longestStreak: 0,
+      lastActiveDate: null,
 
       setUserId: (userId) => set({ userId }),
 
@@ -71,7 +81,26 @@ export const useProgressStore = create<ProgressState>()(
             }).then();
           }
 
-          return { progress: { ...state.progress, [questionId]: updated } };
+          const today = localDateStr();
+          const yesterday = localDateStr(new Date(Date.now() - 86400000));
+          let { currentStreak, longestStreak, lastActiveDate } = state;
+
+          if (lastActiveDate !== today) {
+            if (lastActiveDate === yesterday) {
+              currentStreak += 1;
+            } else {
+              currentStreak = 1;
+            }
+            longestStreak = Math.max(longestStreak, currentStreak);
+            lastActiveDate = today;
+          }
+
+          return {
+            progress: { ...state.progress, [questionId]: updated },
+            currentStreak,
+            longestStreak,
+            lastActiveDate,
+          };
         });
       },
 
@@ -104,7 +133,7 @@ export const useProgressStore = create<ProgressState>()(
         return Math.round((correct / entries.length) * 100);
       },
 
-      reset: () => set({ userId: null, progress: {}, mockTestResults: [] }),
+      reset: () => set({ userId: null, progress: {}, mockTestResults: [], currentStreak: 0, longestStreak: 0, lastActiveDate: null }),
     }),
     {
       name: 'passmate-progress',
@@ -112,6 +141,9 @@ export const useProgressStore = create<ProgressState>()(
       partialize: (state) => ({
         progress: state.progress,
         mockTestResults: state.mockTestResults,
+        currentStreak: state.currentStreak,
+        longestStreak: state.longestStreak,
+        lastActiveDate: state.lastActiveDate,
       }),
     },
   ),

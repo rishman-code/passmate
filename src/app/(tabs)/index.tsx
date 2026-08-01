@@ -32,6 +32,7 @@ export default function HomeScreen() {
   const { isLoading, weakestCategories } = useQuestions();
   const totalAnswered = useProgressStore((s) => s.getTotalAnswered());
   const overallAccuracy = useProgressStore((s) => s.getOverallAccuracy());
+  const currentStreak = useProgressStore((s) => s.currentStreak);
   const progress = useProgressStore((s) => s.progress);
   const isPremium = useSubscriptionStore((s) => s.isPremium);
   const openPaywall = useSubscriptionStore((s) => s.openPaywall);
@@ -107,6 +108,11 @@ export default function HomeScreen() {
               label="Accuracy"
               value={`${overallAccuracy}%`}
               accentColor={overallAccuracy >= 86 ? theme.success : theme.text}
+            />
+            <StatCard
+              label="Streak"
+              value={`${currentStreak}d`}
+              accentColor={currentStreak >= 3 ? theme.warning : theme.text}
             />
           </View>
 
