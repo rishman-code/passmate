@@ -26,8 +26,9 @@ export async function getAIExplanation(question: Question): Promise<string> {
       .maybeSingle();
 
     if (data?.ai_explanation) {
-      memoryCache.set(question.id, data.ai_explanation);
-      return data.ai_explanation;
+      const clean = stripMarkdown(data.ai_explanation);
+      memoryCache.set(question.id, clean);
+      return clean;
     }
   }
 
