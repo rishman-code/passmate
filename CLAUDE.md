@@ -11,9 +11,11 @@ PassMate is an AI-powered UK driving theory test revision app for iOS, built wit
 React Native and Expo. It helps learners pass their DVSA driving theory test through:
 
 - Adaptive practice questions (weak categories shown more often)
-- AI explanations for wrong answers (via Anthropic API)
+- AI explanations after every answer (via Anthropic API, server-side Edge Function)
 - Weak spot identification by category
 - Mock test simulator (50 questions, 57-minute timer, 43/50 pass mark)
+- Daily streak tracking to encourage consistent revision
+- User accounts with progress synced to Supabase
 - £5.99 one-time purchase via RevenueCat
 
 The app runs in a browser during development via `npx expo start --web`.
@@ -28,12 +30,15 @@ The target platform is iOS App Store.
 - React 19.2
 - TypeScript (strict mode — no `any` types)
 - Expo Router v3 (file-based routing)
-- Supabase (@supabase/supabase-js) — database and backend
-- Zustand — state management
+- Supabase (@supabase/supabase-js) — database, auth, and Edge Functions
+- Zustand (with AsyncStorage persist middleware) — state management
 - RevenueCat (react-native-purchases) — payments
-- Anthropic SDK (@anthropic-ai/sdk) — AI explanations
 - React Native StyleSheet — styling (no NativeWind, no Tailwind)
 - @expo/vector-icons (Ionicons) — icons
+
+**Anthropic SDK is server-side only** — it runs inside a Supabase Edge Function
+(Deno), NOT in the React Native client. Do not add `@anthropic-ai/sdk` to the
+client app or expose the API key via `EXPO_PUBLIC_` prefixed variables.
 
 ### CRITICAL: Expo Router v3 rule
 Never import from @react-navigation packages directly.
@@ -49,8 +54,13 @@ Located in `.env` at project root. Current state:
 ```
 EXPO_PUBLIC_SUPABASE_URL=configured (real value in place)
 EXPO_PUBLIC_SUPABASE_ANON_KEY=configured (real value in place)
-EXPO_PUBLIC_ANTHROPIC_API_KEY=placeholder (not yet configured)
 EXPO_PUBLIC_REVENUECAT_IOS_KEY=placeholder (not yet configured)
+```
+
+The Anthropic API key is a **server-side Supabase secret** — it is NOT in `.env`
+and must never be prefixed with `EXPO_PUBLIC_`. It is stored via:
+```bash
+npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 When RevenueCat key is a placeholder, the app automatically unlocks
@@ -63,13 +73,19 @@ premium features in dev mode. Do not break this behaviour.
 ```
 src/
 ├── app/
-│   ├── _layout.tsx              # Root stack + providers
+│   ├── _layout.tsx              # Root stack + auth gate + onboarding redirect
 │   ├── (tabs)/
 │   │   ├── _layout.tsx          # Bottom tabs (Ionicons)
-│   │   ├── index.tsx            # Home dashboard
+│   │   ├── index.tsx            # Home dashboard (stats, streaks, weak spots)
 │   │   ├── practice.tsx         # Category + adaptive practice
 │   │   ├── progress.tsx         # Weak spots and mock test history
-│   │   └── profile.tsx          # Premium status and settings
+│   │   └── profile.tsx          # Account info, premium status, sign out
+│   ├── auth/
+│   │   ├── _layout.tsx          # Auth stack (no header, fade animation)
+│   │   ├── sign-in.tsx          # Email + password sign-in
+│   │   └── sign-up.tsx          # Name + email + password sign-up
+│   ├── onboarding/
+│   │   └── index.tsx            # 3-slide onboarding (shown on first launch only)
 │   ├── practice/
 │   │   └── session.tsx          # Adaptive practice flow (modal)
 │   ├── mock-test/
@@ -81,66 +97,76 @@ src/
 │   ├── app-tabs.web.tsx         # Web-specific tab navigation
 │   ├── button.tsx               # Shared button component
 │   ├── question-card.tsx        # Question display component
-│   ├── answer-options.tsx       # A/B/C/D answer buttons
+│   ├── option-button.tsx        # A/B/C/D answer buttons (testID: option-button-a etc.)
 │   ├── timer.tsx                # Mock test countdown timer
 │   ├── progress-bar.tsx         # Session progress indicator
+│   ├── stat-card.tsx            # Dashboard stat display (label + value)
+│   ├── themed-text.tsx          # Theme-aware text component
+│   ├── themed-view.tsx          # Theme-aware view component
 │   └── ai-explanation.tsx       # AI explanation display with loading state
 ├── constants/
-│   ├── theme.ts                 # BorderRadius, Spacing constants
-│   ├── colors.ts                # Full colour palette
-│   ├── typography.ts            # Text style constants
-│   └── categories.ts            # All 14 DVSA category names
-├── data/
-│   └── sample-questions.ts      # 14 fallback questions (1 per category)
+│   ├── theme.ts                 # BorderRadius, Spacing, tactileShadow constants
+│   ├── colors.ts                # Full colour palette (light + dark)
+│   ├── typography.ts            # Text style constants (Outfit + Plus Jakarta Sans)
+│   └── categories.ts            # All 14 DVSA category names, PREMIUM_PRICE
 ├── hooks/
-│   ├── use-questions.ts         # Question fetching hook
-│   └── use-theme.ts             # Theme hook
+│   ├── use-questions.ts         # Question fetching + weak category computation
+│   └── use-theme.ts             # Theme hook (light/dark aware)
+├── lib/
+│   ├── supabase.ts              # Supabase client (SSR-safe auth storage)
+│   └── auth.ts                  # signUp / signIn / signOut / friendlyAuthError
 ├── services/
-│   ├── supabase.ts              # Supabase client initialisation
-│   ├── questions.ts             # Question fetching service (fixed)
-│   ├── anthropic.ts             # AI explanation service (mock mode)
+│   ├── questions.ts             # fetchAllQuestions, fetchQuestionsByCategory, selectMockTestQuestions
+│   ├── ai-explanations.ts       # getAIExplanation — calls Edge Function, in-memory cache
 │   └── revenuecat.ts            # RevenueCat purchase service
-├── store/
-│   ├── use-subscription-store.ts  # Premium status (Zustand)
-│   ├── use-progress-store.ts      # User progress and history (Zustand)
-│   ├── use-practice-store.ts      # Current practice session (Zustand)
-│   └── use-mock-test-store.ts     # Current mock test session (Zustand)
+├── stores/
+│   ├── auth-store.ts            # Supabase session + user (Zustand)
+│   ├── subscription-store.ts    # Premium status (Zustand, RevenueCat)
+│   ├── progress-store.ts        # Progress, mock results, streaks (Zustand + AsyncStorage persist)
+│   ├── practice-store.ts        # Current practice session (Zustand)
+│   └── mock-test-store.ts       # Current mock test session (Zustand)
 ├── types/
 │   └── database.ts              # TypeScript interfaces for all DB types
 └── utils/
     └── practice.ts              # buildAdaptiveQuestionQueue function
 supabase/
-└── schema.sql                   # Database schema (already run in Supabase)
+├── functions/
+│   └── ai-explanation/
+│       └── index.ts             # Deno Edge Function — auth check + Anthropic call + cache
+├── schema.sql                   # Full database schema (already applied)
+├── migration-add-auth.sql       # Adds user_id to progress tables, enables RLS (already run)
+└── migration-cache-rls.sql      # Enables RLS on ai_explanation_cache (already run)
 ```
 
 ---
 
 ## Database (Supabase)
 
-The Supabase project is live and configured.
-The schema has been applied. The questions table has 119 questions.
+The Supabase project is live and configured. Project ref: `rngbdevqxvzyuwgezgce`.
+All migrations have been run. The questions table has **717 questions**.
 
 ### Tables
 
-**questions**
+**questions** — RLS OFF (public read-only data)
 ```typescript
 interface Question {
-  id: string;           // uuid
-  category: string;     // one of 14 DVSA categories
+  id: string;
+  category: string;          // one of 14 DVSA categories
   question_text: string;
   option_a: string;
   option_b: string;
   option_c: string;
   option_d: string;
   correct_answer: 'a' | 'b' | 'c' | 'd';
-  explanation: string;  // DVSA official explanation
+  explanation: string;       // DVSA official explanation
   image_url?: string;
 }
 ```
 
-**user_progress**
+**user_progress** — RLS ON (users see only their own rows)
 ```typescript
 interface UserProgress {
+  user_id: string;           // uuid, references auth.users
   question_id: string;
   answered_correctly: boolean;
   answered_at: string;
@@ -148,20 +174,20 @@ interface UserProgress {
 }
 ```
 
-**ai_explanations** (cache table)
+**ai_explanation_cache** — RLS ON (authenticated read; writes via Edge Function service role)
 ```typescript
 interface AIExplanationCache {
   question_id: string;
-  wrong_answer: string;
   ai_explanation: string;
   created_at: string;
 }
 ```
 
-**mock_test_results**
+**mock_test_results** — RLS ON (users see only their own rows)
 ```typescript
 interface MockTestResult {
   id: string;
+  user_id: string;           // uuid, references auth.users
   score: number;
   total_questions: number;
   passed: boolean;
@@ -170,9 +196,13 @@ interface MockTestResult {
 }
 ```
 
-### RLS Status
-RLS is currently OFF on all tables. Do not enable it.
-This is intentional for the development phase.
+### RLS Summary
+| Table | RLS | Notes |
+|---|---|---|
+| questions | OFF | Public read-only |
+| user_progress | ON | Policy: `auth.uid() = user_id` |
+| mock_test_results | ON | Policy: `auth.uid() = user_id` |
+| ai_explanation_cache | ON | Authenticated SELECT; INSERT/UPDATE via service role only |
 
 ---
 
@@ -199,28 +229,22 @@ This is intentional for the development phase.
 
 ## Colour Palette
 
-```typescript
-export const Colors = {
-  primary: '#1B4FD8',
-  primaryLight: '#EEF2FF',
-  success: '#16A34A',
-  successLight: '#DCFCE7',
-  danger: '#DC2626',
-  dangerLight: '#FEE2E2',
-  warning: '#D97706',
-  warningLight: '#FEF3C7',
-  background: '#F8FAFC',
-  card: '#FFFFFF',
-  text: '#0F172A',
-  textSecondary: '#64748B',
-  border: '#E2E8F0',
-  disabled: '#94A3B8',
-};
-```
+Primary brand colour is `#FF4500` (orange), not blue. The theme uses a
+neo-brutalist design system with `tactileShadow` and `borderHard` tokens.
+Full palette is in `src/constants/colors.ts` with light/dark variants.
 
 ---
 
 ## Feature Behaviour
+
+### Authentication
+- Supabase Auth with email + password
+- Display name stored in `user_metadata.name`
+- Sessions persisted via localStorage on web, AsyncStorage on native
+- `src/lib/supabase.ts` uses an SSR-safe storage wrapper (guards on `typeof window`)
+- On sign-in: `loadFromSupabase(user.id)` syncs progress from Supabase
+- On sign-out: `reset()` clears local Zustand state
+- Root `_layout.tsx` redirects unauthenticated users to `/auth/sign-in`
 
 ### Adaptive Practice
 Questions are weighted by performance:
@@ -231,20 +255,37 @@ Questions are weighted by performance:
 The `buildAdaptiveQuestionQueue` function in `src/utils/practice.ts`
 handles this weighting. Do not rewrite this function — it is correct.
 
-### Question Fetching (already fixed)
-`src/services/questions.ts` was updated to:
-- `fetchAllQuestions()` — paginates with .range() to load all 119 questions
-- `fetchQuestionsByCategory(category)` — queries Supabase with .eq() filter
+### Question Fetching
+`src/services/questions.ts`:
+- `fetchAllQuestions()` — paginates with `.range()` to load all 717 questions
+- `fetchQuestionsByCategory(category)` — queries Supabase with `.eq()` filter
 - `selectMockTestQuestions()` — stratified: ~3-4 questions per category, 50 total
 
 ### AI Explanations
-When a user answers wrong:
-1. Check `ai_explanations` cache table in Supabase first
-2. If cached — return cached explanation immediately
-3. If not cached — call Anthropic API, save to cache, return result
-4. If Anthropic key is placeholder — fall back to the DVSA explanation field
-5. Show shimmer/skeleton loading state while API call is in flight
-Premium users only. Free users see DVSA official explanation only.
+Shown after every answer for premium users. Free users see the DVSA explanation only.
+
+Flow:
+1. `session.tsx` calls `getAIExplanation(question)` from `src/services/ai-explanations.ts`
+2. Service checks in-memory cache first
+3. If not cached: calls `supabase.functions.invoke('ai-explanation', { body: { question_id } })`
+4. Edge Function (`supabase/functions/ai-explanation/index.ts`):
+   - Verifies caller's JWT (returns 401 if not authenticated)
+   - Checks `ai_explanation_cache` table (service role key)
+   - If cached: returns immediately
+   - If not cached: calls Anthropic API (key from Supabase secret), saves to cache, returns
+5. Client caches result in memory; strips markdown from response
+6. Fallback: if Edge Function fails for any reason, returns `question.explanation` (DVSA text)
+
+The Anthropic key is **never** in the client bundle. It lives only as a Supabase secret.
+
+### Daily Streaks
+Tracked in `progress-store.ts`:
+- `currentStreak` — consecutive days with at least one answer
+- `longestStreak` — all-time best
+- `lastActiveDate` — local date string (YYYY-MM-DD, device timezone)
+- Increments on first answer of a new consecutive day; resets after a gap
+- Persisted to AsyncStorage; survives app restarts
+- Displayed on home screen as a third stat card (turns orange at 3+ days)
 
 ### Mock Test
 - 50 questions, 57-minute timer
@@ -255,10 +296,10 @@ Premium users only. Free users see DVSA official explanation only.
 ### Paywall
 - Trigger: when free user attempts question 21+ in a day
 - Daily count resets at midnight
-- Product ID: passmate_lifetime
-- Entitlement ID: premium
+- Product ID: `passmate_lifetime`
+- Entitlement ID: `premium`
 - Price: £5.99 one-time purchase
-- When key is placeholder: auto-unlock premium (dev mode)
+- When RevenueCat key is placeholder: auto-unlock premium (dev mode)
 
 ---
 
@@ -266,59 +307,42 @@ Premium users only. Free users see DVSA official explanation only.
 
 ### What is working
 - App runs in browser via `npx expo start --web`
-- All 14 DVSA categories display on home screen
-- 119 questions load from Supabase
-- Navigation between all tabs works
-- Adaptive weighting logic is in place
-- Mock test timer and flow is built
+- Sign-up / sign-in / sign-out with Supabase Auth
+- Onboarding (3 slides, shown once per device)
+- All 14 DVSA categories displayed; 717 questions in Supabase
+- Adaptive practice with weighted question queue
+- Progress persisted locally (AsyncStorage) and synced to Supabase per user
+- Daily streak tracking with home screen display
+- AI explanations via Supabase Edge Function (Anthropic key server-side)
+- Mock test timer and flow
 - RevenueCat dev mode unlocks premium
+- TypeScript: zero errors (`npx tsc --noEmit` is clean)
+- App Store assets: icon, screenshots, store listing copy, privacy policy
 
-### Known TypeScript errors to fix first
+### What is blocked
+- **RevenueCat real purchase flow** — needs Apple Developer account ($99/year)
+- **Testing on physical iPhone** — needs Apple Developer account
+- **App Store submission** — needs Apple Developer account
+- **Push notifications delivery** — needs Apple Developer / APNs certificates
 
-**Error 1: src/components/app-tabs.web.tsx line 27**
-```
-Type '"/explore"' is not assignable to type RelativePathString...
-```
-There is a reference to a route called `/explore` that does not exist.
-Valid tab routes are: `/(tabs)/`, `/(tabs)/practice`,
-`/(tabs)/progress`, `/(tabs)/profile`
-Replace `/explore` with `/(tabs)/practice` or remove it entirely.
-
-**Error 2: src/components/button.tsx line 54**
-```
-Argument of type '{ pressed: boolean; }' is not assignable to
-parameter of type 'PressableStateCallbackType'.
-Property 'hovered' is missing.
-```
-Fix the Pressable style callback to use the correct type.
-Solution: change the callback parameter type to include hovered,
-or use `({ pressed }: { pressed: boolean; hovered?: boolean })`.
-
-After fixing both errors, run `npx tsc --noEmit` to confirm
-zero TypeScript errors before doing anything else.
-
----
-
-## What Needs Building Next (in priority order)
-
-1. **Fix the two TypeScript errors above** — do this first
-2. **Verify multiple questions load per category** — not just 1
-3. **Anthropic AI explanation** — wire up real API call when key is provided
-4. **Onboarding screen** — 3 slides shown on first launch only
-5. **Phone connection** — app currently only runs in browser, not on phone via Expo Go
-6. **RevenueCat** — wire up real purchase flow when Apple Developer account is ready
-7. **App Store assets** — icon, screenshots, description (later)
+### What could be built next
+1. `expo-secure-store` for auth tokens (medium security improvement — store in Keychain on native)
+2. Push notifications infrastructure (Expo Notifications — infra now, delivery when Apple account ready)
+3. Leaderboard or social features
+4. More questions (717 is good; DVSA bank has 900+)
 
 ---
 
 ## Coding Standards
 
 - TypeScript strict mode — zero `any` types allowed
-- All screens must use SafeAreaView
+- All screens must use SafeAreaView with `edges={['top', 'bottom']}`
 - Every screen must handle loading state (ActivityIndicator)
 - Every screen must handle empty state (friendly message)
 - Use StyleSheet.create() for all styles — no inline style objects
 - No @react-navigation imports — Expo Router only
+- No `EXPO_PUBLIC_ANTHROPIC_API_KEY` — Anthropic is server-side only
+- Supabase Edge Functions are Deno TypeScript — exclude `supabase/functions/` from tsconfig
 - When in doubt, ask before changing working code
 
 ---
@@ -326,14 +350,25 @@ zero TypeScript errors before doing anything else.
 ## How to Run the App
 
 ```bash
-# In browser (works now)
+# In browser (primary development method)
 npx expo start --web
 
-# On phone via local network (requires phone and PC on same WiFi)
-npx expo start
-
-# TypeScript check
+# TypeScript check (must be clean before merging anything)
 npx tsc --noEmit
+
+# Deploy Edge Function (requires Supabase CLI + project linked)
+npx supabase functions deploy ai-explanation
+
+# Set/update Anthropic secret
+npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+
+# Link project (one-time per machine, needs SUPABASE_ACCESS_TOKEN env var)
+npx supabase link --project-ref rngbdevqxvzyuwgezgce
+```
+
+Note: on this machine, SSL verification must be bypassed:
+```bash
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx expo start --web
 ```
 
 ---
@@ -341,6 +376,5 @@ npx tsc --noEmit
 ## First Thing to Do in Every Claude Code Session
 
 1. Read this file fully
-2. Run `npx tsc --noEmit` to see current error state
-3. Fix any TypeScript errors before adding new features
-4. Confirm app still runs with `npx expo start --web` after changes
+2. Run `npx tsc --noEmit` to confirm zero TypeScript errors
+3. Do not add new features until the TypeScript check is clean
