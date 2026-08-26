@@ -9,9 +9,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/button';
 import { JourneyPromptBanner } from '@/components/journey-prompt-banner';
 import { ProgressBar } from '@/components/progress-bar';
+import { RetakeCard } from '@/components/retake-card';
 import { StatCard } from '@/components/stat-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import type { DVSACategory } from '@/constants/categories';
 import {
   MOCK_TEST_PASS_SCORE,
   MOCK_TEST_QUESTION_COUNT,
@@ -21,7 +23,7 @@ import { JOURNEY_PROMPT_THRESHOLD } from '@/constants/journey';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useQuestions } from '@/hooks/use-questions';
 import { useTheme } from '@/hooks/use-theme';
-import { fetchAllQuestions } from '@/services/questions';
+import { fetchAllQuestions, fetchQuestionsByCategory } from '@/services/questions';
 import { usePracticeStore } from '@/stores/practice-store';
 import { useJourneyStore } from '@/stores/journey-store';
 import { useProgressStore } from '@/stores/progress-store';
@@ -32,7 +34,7 @@ const BANNER_IMAGE = 'https://images.pexels.com/photos/29909543/pexels-photo-299
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const { isLoading, weakestCategories } = useQuestions();
+  const { isLoading, weakestCategories, categoryScores } = useQuestions();
   const totalAnswered = useProgressStore((s) => s.getTotalAnswered());
   const overallAccuracy = useProgressStore((s) => s.getOverallAccuracy());
   const currentStreak = useProgressStore((s) => s.currentStreak);
@@ -42,6 +44,7 @@ export default function HomeScreen() {
   const setQuestions = usePracticeStore((s) => s.setQuestions);
   const setCategoryFilter = usePracticeStore((s) => s.setCategoryFilter);
   const hasSeenJourneyPrompt = useJourneyStore((s) => s.hasSeenPrompt);
+  const journey = useJourneyStore((s) => s.journey);
   const [isStarting, setIsStarting] = useState(false);
 
   const showJourneyPrompt = !hasSeenJourneyPrompt && totalAnswered >= JOURNEY_PROMPT_THRESHOLD;
@@ -52,6 +55,19 @@ export default function HomeScreen() {
       const allQuestions = await fetchAllQuestions();
       const queue = buildAdaptiveQuestionQueue(allQuestions, progress, 10);
       setCategoryFilter(null);
+      setQuestions(queue);
+      router.push('/practice/session');
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  const practiceTopic = async (category: string) => {
+    setIsStarting(true);
+    try {
+      const categoryQuestions = await fetchQuestionsByCategory(category as DVSACategory);
+      const queue = buildAdaptiveQuestionQueue(categoryQuestions, progress, categoryQuestions.length);
+      setCategoryFilter(category);
       setQuestions(queue);
       router.push('/practice/session');
     } finally {
@@ -88,6 +104,14 @@ export default function HomeScreen() {
           </View>
 
           {showJourneyPrompt ? <JourneyPromptBanner /> : null}
+
+          {journey.state === 'retake' ? (
+            <RetakeCard
+              lastResult={journey.lastResult}
+              categoryScores={categoryScores}
+              onPracticeTopic={practiceTopic}
+            />
+          ) : null}
 
           {!isPremium ? (
             <Pressable

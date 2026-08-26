@@ -78,7 +78,13 @@ export default function JourneySetupScreen() {
       state: selectedState,
       testDate: selectedState === 'booked' ? pickedDate : null,
     });
-    close();
+    markPromptSeen();
+
+    if (selectedState === 'retake') {
+      router.replace('/journey/result-letter');
+    } else {
+      close();
+    }
   };
 
   return (
