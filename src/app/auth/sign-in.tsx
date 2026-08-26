@@ -16,11 +16,13 @@ import { ThemedView } from '@/components/themed-view';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { friendlyAuthError, signIn } from '@/lib/auth';
 import { useTheme } from '@/hooks/use-theme';
+import { useJourneyStore } from '@/stores/journey-store';
 import { useProgressStore } from '@/stores/progress-store';
 
 export default function SignInScreen() {
   const theme = useTheme();
   const loadFromSupabase = useProgressStore((s) => s.loadFromSupabase);
+  const loadJourneyFromSupabase = useJourneyStore((s) => s.loadFromSupabase);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export default function SignInScreen() {
     setIsLoading(true);
     try {
       const { user } = await signIn(email.trim().toLowerCase(), password);
-      if (user) await loadFromSupabase(user.id);
+      if (user) await Promise.all([loadFromSupabase(user.id), loadJourneyFromSupabase(user.id)]);
       router.replace('/');
     } catch (e) {
       setError(friendlyAuthError(e instanceof Error ? e.message : ''));

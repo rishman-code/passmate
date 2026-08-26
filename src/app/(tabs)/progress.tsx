@@ -1,4 +1,6 @@
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ProgressBar } from '@/components/progress-bar';
@@ -41,6 +43,22 @@ export default function ProgressScreen() {
               accentColor={overallAccuracy >= 86 ? theme.success : undefined}
             />
           </View>
+
+          <Pressable
+            onPress={() => router.push('/mistake-ledger')}
+            testID="progress-mistake-ledger-button"
+            style={[styles.mistakeLedgerLink, { backgroundColor: theme.card, borderColor: theme.borderHard }]}>
+            <View style={[styles.mistakeLedgerIcon, { backgroundColor: theme.errorLight }]}>
+              <Ionicons name="bookmark" size={18} color={theme.error} />
+            </View>
+            <View style={styles.mistakeLedgerText}>
+              <ThemedText style={styles.mistakeLedgerTitle}>Mistake Ledger</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Every question you've got wrong or flagged
+              </ThemedText>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+          </Pressable>
 
           <ThemedText type="h3">Category Breakdown</ThemedText>
           {practisedCategories.length === 0 ? (
@@ -129,6 +147,29 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.three,
+  },
+  mistakeLedgerLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    padding: Spacing.three,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 2,
+  },
+  mistakeLedgerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mistakeLedgerText: {
+    flex: 1,
+    gap: 2,
+  },
+  mistakeLedgerTitle: {
+    fontSize: 15,
+    fontFamily: Fonts.bodyBold,
   },
   sectionTitle: {
     fontSize: 18,

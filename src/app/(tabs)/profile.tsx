@@ -11,8 +11,12 @@ import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { signOut } from '@/lib/auth';
 import { useAuthStore } from '@/stores/auth-store';
+import { useJourneyStore } from '@/stores/journey-store';
+import { useMistakeLedgerStore } from '@/stores/mistake-ledger-store';
 import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
+import type { JourneyState } from '@/types/journey';
+import { formatLocalDateLong } from '@/utils/journey-dates';
 
 const FEATURES = [
   { icon: 'sparkles' as const, text: 'AI explanations for wrong answers' },
@@ -21,11 +25,21 @@ const FEATURES = [
   { icon: 'infinite' as const, text: 'Unlimited practice sessions' },
 ];
 
+const JOURNEY_STATE_LABELS: Record<JourneyState, string> = {
+  preparing: 'Preparing',
+  booked: 'Booked',
+  retake: 'Retaking',
+  certified: 'Certified',
+};
+
 export default function ProfileScreen() {
   const theme = useTheme();
   const { isPremium, isLoading, restore, openPaywall, openCustomerCenter } = useSubscriptionStore();
   const user = useAuthStore((s) => s.user);
   const resetProgress = useProgressStore((s) => s.reset);
+  const journey = useJourneyStore((s) => s.journey);
+  const resetJourney = useJourneyStore((s) => s.reset);
+  const resetMistakeLedger = useMistakeLedgerStore((s) => s.reset);
 
   const displayName = (user?.user_metadata?.name as string | undefined) ?? user?.email ?? 'Account';
 
@@ -46,6 +60,8 @@ export default function ProfileScreen() {
   const handleSignOut = async () => {
     await signOut();
     resetProgress();
+    resetJourney();
+    resetMistakeLedger();
     router.replace('/auth/sign-in');
   };
 
@@ -118,6 +134,34 @@ export default function ProfileScreen() {
               </ThemedText>
             </View>
           )}
+
+          <View style={styles.section}>
+            <ThemedText type="caption" themeColor="textSecondary">
+              Test Journey
+            </ThemedText>
+            <View
+              style={[
+                styles.journeyCard,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+              ]}>
+              <View style={styles.journeyText}>
+                <ThemedText style={styles.journeyState}>
+                  {JOURNEY_STATE_LABELS[journey.state]}
+                </ThemedText>
+                {journey.state === 'booked' && journey.testDate ? (
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Test on {formatLocalDateLong(journey.testDate)}
+                  </ThemedText>
+                ) : null}
+              </View>
+              <Button
+                title="Edit"
+                variant="outline"
+                onPress={() => router.push('/journey/setup')}
+                testID="profile-edit-journey-button"
+              />
+            </View>
+          </View>
 
           <View style={styles.section}>
             <ThemedText type="caption" themeColor="textSecondary">
@@ -228,6 +272,23 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: Spacing.two,
+  },
+  journeyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.three,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
+    gap: Spacing.three,
+  },
+  journeyText: {
+    flex: 1,
+    gap: 2,
+  },
+  journeyState: {
+    fontSize: 16,
+    fontFamily: Fonts.bodyBold,
   },
   info: {
     padding: Spacing.three,

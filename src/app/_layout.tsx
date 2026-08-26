@@ -21,6 +21,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
+import { useCertificateExpiryWatch } from '@/hooks/use-certificate-expiry-watch';
 import { hasSeenOnboarding } from '@/lib/onboarding';
 import { useAuthStore } from '@/stores/auth-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
@@ -33,6 +34,8 @@ export default function RootLayout() {
   const session = useAuthStore((s) => s.session);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+
+  useCertificateExpiryWatch();
 
   const [outfitLoaded] = useOutfitFonts({
     Outfit_500Medium,
@@ -105,6 +108,19 @@ export default function RootLayout() {
           name="paywall"
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
+        <Stack.Screen
+          name="journey/setup"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="journey/result-letter"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="journey/certificate"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen name="mistake-ledger" options={{ headerShown: true, title: 'Mistake Ledger' }} />
       </Stack>
       {!session && <Redirect href="/auth/sign-in" />}
       {session && onboardingChecked && needsOnboarding && <Redirect href="/onboarding" />}

@@ -13,6 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getAIExplanation } from '@/services/ai-explanations';
+import { useMistakeLedgerStore } from '@/stores/mistake-ledger-store';
 import { usePracticeStore } from '@/stores/practice-store';
 import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
@@ -25,6 +26,8 @@ export default function PracticeSessionScreen() {
   const theme = useTheme();
   const isPremium = useSubscriptionStore((s) => s.isPremium);
   const recordAnswer = useProgressStore((s) => s.recordAnswer);
+  const toggleFlag = useMistakeLedgerStore((s) => s.toggleFlag);
+  const flaggedIds = useMistakeLedgerStore((s) => s.flaggedIds);
 
   const {
     questions,
@@ -79,6 +82,8 @@ export default function PracticeSessionScreen() {
     router.back();
   };
 
+  const isFlagged = Boolean(flaggedIds[question.id]);
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -86,10 +91,22 @@ export default function PracticeSessionScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12} testID="practice-session-close-button">
             <Ionicons name="close" size={28} color={theme.text} />
           </Pressable>
-          <View style={[styles.scoreChip, { backgroundColor: theme.backgroundElement, borderColor: theme.borderHard }]}>
-            <ThemedText type="code" style={{ color: theme.text }}>
-              {answeredCount === 0 ? '—' : `${correctCount}/${answeredCount}`}
-            </ThemedText>
+          <View style={styles.topBarRight}>
+            <Pressable
+              onPress={() => toggleFlag(question.id)}
+              hitSlop={12}
+              testID="practice-session-flag-button">
+              <Ionicons
+                name={isFlagged ? 'flag' : 'flag-outline'}
+                size={22}
+                color={isFlagged ? theme.warning : theme.text}
+              />
+            </Pressable>
+            <View style={[styles.scoreChip, { backgroundColor: theme.backgroundElement, borderColor: theme.borderHard }]}>
+              <ThemedText type="code" style={{ color: theme.text }}>
+                {answeredCount === 0 ? '—' : `${correctCount}/${answeredCount}`}
+              </ThemedText>
+            </View>
           </View>
         </View>
 
@@ -161,6 +178,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
+  },
+  topBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
   },
   scoreChip: {
     paddingHorizontal: Spacing.three,
