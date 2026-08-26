@@ -7,10 +7,12 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { CountdownCard } from '@/components/countdown-card';
 import { JourneyPromptBanner } from '@/components/journey-prompt-banner';
 import { ProgressBar } from '@/components/progress-bar';
 import { RetakeCard } from '@/components/retake-card';
 import { StatCard } from '@/components/stat-card';
+import { TestDayScreen } from '@/components/test-day-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import type { DVSACategory } from '@/constants/categories';
@@ -28,7 +30,11 @@ import { usePracticeStore } from '@/stores/practice-store';
 import { useJourneyStore } from '@/stores/journey-store';
 import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
+import { daysUntil } from '@/utils/journey-dates';
 import { buildAdaptiveQuestionQueue } from '@/utils/practice';
+
+const HP_PASS_MARK = 44;
+const HP_MAX = 75;
 
 const BANNER_IMAGE = 'https://images.pexels.com/photos/29909543/pexels-photo-29909543.jpeg';
 
@@ -39,6 +45,7 @@ export default function HomeScreen() {
   const overallAccuracy = useProgressStore((s) => s.getOverallAccuracy());
   const currentStreak = useProgressStore((s) => s.currentStreak);
   const progress = useProgressStore((s) => s.progress);
+  const mockTestResults = useProgressStore((s) => s.mockTestResults);
   const isPremium = useSubscriptionStore((s) => s.isPremium);
   const openPaywall = useSubscriptionStore((s) => s.openPaywall);
   const setQuestions = usePracticeStore((s) => s.setQuestions);
@@ -90,6 +97,12 @@ export default function HomeScreen() {
     );
   }
 
+  const isTestDay = journey.state === 'booked' && journey.testDate !== null && daysUntil(journey.testDate) <= 0;
+
+  if (isTestDay) {
+    return <TestDayScreen />;
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -110,6 +123,16 @@ export default function HomeScreen() {
               lastResult={journey.lastResult}
               categoryScores={categoryScores}
               onPracticeTopic={practiceTopic}
+            />
+          ) : null}
+
+          {journey.state === 'preparing' || journey.state === 'booked' ? (
+            <CountdownCard
+              state={journey.state}
+              testDate={journey.testDate}
+              mockTestResults={mockTestResults}
+              overallAccuracy={overallAccuracy}
+              weakestCategory={weakestCategories[0]?.category ?? null}
             />
           ) : null}
 
@@ -171,8 +194,9 @@ export default function HomeScreen() {
             ]}>
             <Ionicons name="timer-outline" size={20} color={theme.primary} />
             <ThemedText type="small" themeColor="textSecondary">
-              Mock test: {MOCK_TEST_QUESTION_COUNT} questions, 57 minutes. Pass mark:{' '}
-              {MOCK_TEST_PASS_SCORE}/{MOCK_TEST_QUESTION_COUNT}.
+              Mock test: {MOCK_TEST_QUESTION_COUNT} questions, 57 minutes. Pass marks:{' '}
+              {MOCK_TEST_PASS_SCORE}/{MOCK_TEST_QUESTION_COUNT} multiple choice and {HP_PASS_MARK}/
+              {HP_MAX} hazard perception — both must be passed.
             </ThemedText>
           </View>
 
