@@ -52,7 +52,7 @@ export function Button({
 
   return (
     <Pressable
-      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
+      style={({ pressed }) => [
         styles.button,
         fullWidth && styles.fullWidth,
         {
@@ -62,7 +62,7 @@ export function Button({
           transform: [{ translateY: pressed && !isDisabled ? 3 : 0 }],
           ...(pressed && !isDisabled ? {} : tactileShadow(theme.borderHard, 4)),
         },
-        typeof style === 'function' ? style({ pressed, hovered: false }) : style,
+        typeof style === 'function' ? style({ pressed }) : style,
       ]}
       disabled={isDisabled}
       onPress={handlePress}
