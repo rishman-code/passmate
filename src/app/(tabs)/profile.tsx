@@ -12,6 +12,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { signOut } from '@/lib/auth';
 import { useAuthStore } from '@/stores/auth-store';
 import { useJourneyStore } from '@/stores/journey-store';
+import { useMistakeLedgerStore } from '@/stores/mistake-ledger-store';
 import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import type { JourneyState } from '@/types/journey';
@@ -38,6 +39,7 @@ export default function ProfileScreen() {
   const resetProgress = useProgressStore((s) => s.reset);
   const journey = useJourneyStore((s) => s.journey);
   const resetJourney = useJourneyStore((s) => s.reset);
+  const resetMistakeLedger = useMistakeLedgerStore((s) => s.reset);
 
   const displayName = (user?.user_metadata?.name as string | undefined) ?? user?.email ?? 'Account';
 
@@ -59,6 +61,7 @@ export default function ProfileScreen() {
     await signOut();
     resetProgress();
     resetJourney();
+    resetMistakeLedger();
     router.replace('/auth/sign-in');
   };
 

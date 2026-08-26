@@ -41,4 +41,12 @@ describe('sessionShapeForDaysRemaining', () => {
     expect(shape.headline).toBe('Test day');
     expect(shape.detail).toMatch(/No new content/);
   });
+
+  it('emphasizes the mistake ledger only for the two closest-to-test brackets', () => {
+    expect(sessionShapeForDaysRemaining(1).emphasizeMistakeReview).toBe(true);
+    expect(sessionShapeForDaysRemaining(6).emphasizeMistakeReview).toBe(true);
+    expect(sessionShapeForDaysRemaining(7).emphasizeMistakeReview).toBe(false);
+    expect(sessionShapeForDaysRemaining(0).emphasizeMistakeReview).toBe(false);
+    expect(sessionShapeForDaysRemaining(null).emphasizeMistakeReview).toBe(false);
+  });
 });

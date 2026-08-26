@@ -55,6 +55,16 @@ export function CountdownCard({
         {sessionShape.detail}
       </ThemedText>
 
+      {sessionShape.emphasizeMistakeReview ? (
+        <Button
+          title="Review your mistakes"
+          variant="outline"
+          onPress={() => router.push('/mistake-ledger')}
+          fullWidth
+          testID="countdown-card-mistake-ledger-button"
+        />
+      ) : null}
+
       <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
       <ThemedText type="caption" themeColor="textSecondary">

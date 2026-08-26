@@ -13,6 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { MOCK_TEST_QUESTION_COUNT } from '@/constants/categories';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useMistakeLedgerStore } from '@/stores/mistake-ledger-store';
 import { useMockTestStore } from '@/stores/mock-test-store';
 import type { AnswerOption } from '@/types/database';
 import { getOptionText } from '@/utils/practice';
@@ -40,6 +41,9 @@ export default function MockTestSessionScreen() {
   } = useMockTestStore();
 
   const question = questions[currentIndex] ?? null;
+  const toggleFlag = useMistakeLedgerStore((s) => s.toggleFlag);
+  const flaggedIds = useMistakeLedgerStore((s) => s.flaggedIds);
+  const isFlagged = question ? Boolean(flaggedIds[question.id]) : false;
 
   useEffect(() => {
     if (!isActive && questions.length > 0) {
@@ -92,9 +96,21 @@ export default function MockTestSessionScreen() {
             />
           </Pressable>
           <Timer seconds={timeRemaining} />
-          <ThemedText type="small" themeColor="textSecondary">
-            {currentIndex + 1}/{questions.length}
-          </ThemedText>
+          <View style={styles.topBarRight}>
+            <Pressable
+              onPress={() => toggleFlag(question.id)}
+              hitSlop={12}
+              testID="mock-test-session-flag-button">
+              <Ionicons
+                name={isFlagged ? 'flag' : 'flag-outline'}
+                size={22}
+                color={isFlagged ? theme.warning : theme.text}
+              />
+            </Pressable>
+            <ThemedText type="small" themeColor="textSecondary">
+              {currentIndex + 1}/{questions.length}
+            </ThemedText>
+          </View>
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -156,6 +172,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
+  },
+  topBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
   },
   scroll: {
     padding: Spacing.four,

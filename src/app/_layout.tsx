@@ -113,6 +113,7 @@ export default function RootLayout() {
           name="journey/result-letter"
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
+        <Stack.Screen name="mistake-ledger" options={{ headerShown: true, title: 'Mistake Ledger' }} />
       </Stack>
       {!session && <Redirect href="/auth/sign-in" />}
       {session && onboardingChecked && needsOnboarding && <Redirect href="/onboarding" />}
