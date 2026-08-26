@@ -90,3 +90,50 @@ export function certificateExpiryDate(passDate: LocalDate): LocalDate {
 export function isCertificateValid(expiryDate: LocalDate, asOf: LocalDate = todayInLondon()): boolean {
   return compareLocalDates(asOf, expiryDate) <= 0;
 }
+
+/**
+ * DVSA test centres run Monday-Saturday; only Sunday and bank holidays are
+ * excluded from "working days" for the rebooking rule below.
+ */
+function isWorkingDay(date: LocalDate, bankHolidays: ReadonlySet<string>): boolean {
+  const dayOfWeek = partsToUTCDate(parseLocalDate(date)).getUTCDay();
+  return dayOfWeek !== 0 && !bankHolidays.has(date);
+}
+
+/**
+ * Earliest date a candidate can sit a DVSA theory test again after failing on
+ * `failDate`: at least 3 clear working days must fall strictly between the
+ * fail date and the retest date, then the retest itself lands on the next
+ * working day after those 3. Fail on a Monday -> earliest retest is Friday
+ * (Tue/Wed/Thu are the 3 clear days). Fail on a Friday -> earliest retest is
+ * the following Wednesday (Sat/Mon/Tue are the 3 clear days; Sunday doesn't
+ * count as a working day so it's skipped, not counted).
+ */
+export function earliestRetakeDate(failDate: LocalDate, bankHolidays: readonly string[] = []): LocalDate {
+  const holidaySet = new Set(bankHolidays);
+
+  let cursor = failDate;
+  let clearDaysFound = 0;
+  while (clearDaysFound < 3) {
+    cursor = addDays(cursor, 1);
+    if (isWorkingDay(cursor, holidaySet)) {
+      clearDaysFound += 1;
+    }
+  }
+
+  do {
+    cursor = addDays(cursor, 1);
+  } while (!isWorkingDay(cursor, holidaySet));
+
+  return cursor;
+}
+
+/** Displays a LocalDate as e.g. "21 May 2028", unaffected by the device's own timezone. */
+export function formatLocalDateLong(date: LocalDate): string {
+  return partsToUTCDate(parseLocalDate(date)).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}

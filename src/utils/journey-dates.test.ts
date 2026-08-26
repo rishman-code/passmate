@@ -7,6 +7,8 @@ import {
   compareLocalDates,
   daysBetween,
   daysUntil,
+  earliestRetakeDate,
+  formatLocalDateLong,
   isCertificateValid,
   isValidLocalDate,
   todayInLondon,
@@ -96,5 +98,32 @@ describe('certificate expiry', () => {
 describe('todayInLondon', () => {
   it('returns a well-formed local date', () => {
     expect(isValidLocalDate(todayInLondon())).toBe(true);
+  });
+});
+
+describe('earliestRetakeDate', () => {
+  it('failing on a Monday gives Friday as the earliest retest (Tue/Wed/Thu are the 3 clear days)', () => {
+    expect(earliestRetakeDate('2026-08-24')).toBe('2026-08-28');
+  });
+
+  it('failing on a Friday gives the following Wednesday (Sat/Mon/Tue are the 3 clear days; Sunday doesn\'t count)', () => {
+    expect(earliestRetakeDate('2026-08-28')).toBe('2026-09-02');
+  });
+
+  it('a bank holiday inside the window pushes the retest date out by one working day', () => {
+    const withoutHoliday = earliestRetakeDate('2026-08-24');
+    const withHoliday = earliestRetakeDate('2026-08-24', ['2026-08-26']);
+    expect(withoutHoliday).toBe('2026-08-28');
+    expect(withHoliday).toBe('2026-08-29');
+  });
+
+  it('works with no bank holiday data at all (offline fallback path)', () => {
+    expect(earliestRetakeDate('2026-08-24', [])).toBe('2026-08-28');
+  });
+});
+
+describe('formatLocalDateLong', () => {
+  it('formats a date-only string as a readable UK date', () => {
+    expect(formatLocalDateLong('2026-08-28')).toBe('28 August 2026');
   });
 });

@@ -15,6 +15,7 @@ import { useJourneyStore } from '@/stores/journey-store';
 import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import type { JourneyState } from '@/types/journey';
+import { formatLocalDateLong } from '@/utils/journey-dates';
 
 const FEATURES = [
   { icon: 'sparkles' as const, text: 'AI explanations for wrong answers' },
@@ -29,15 +30,6 @@ const JOURNEY_STATE_LABELS: Record<JourneyState, string> = {
   retake: 'Retaking',
   certified: 'Certified',
 };
-
-function formatLocalDate(date: string): string {
-  return new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-}
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -155,7 +147,7 @@ export default function ProfileScreen() {
                 </ThemedText>
                 {journey.state === 'booked' && journey.testDate ? (
                   <ThemedText type="small" themeColor="textSecondary">
-                    Test on {formatLocalDate(journey.testDate)}
+                    Test on {formatLocalDateLong(journey.testDate)}
                   </ThemedText>
                 ) : null}
               </View>
