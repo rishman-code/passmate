@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { CertificateStatusScreen } from '@/components/certificate-status-screen';
 import { CountdownCard } from '@/components/countdown-card';
 import { JourneyPromptBanner } from '@/components/journey-prompt-banner';
 import { ProgressBar } from '@/components/progress-bar';
@@ -101,6 +102,10 @@ export default function HomeScreen() {
 
   if (isTestDay) {
     return <TestDayScreen />;
+  }
+
+  if (journey.state === 'certified' && journey.certificate) {
+    return <CertificateStatusScreen expiryDate={journey.certificate.expiryDate} />;
   }
 
   return (

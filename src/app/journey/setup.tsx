@@ -5,13 +5,14 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
-import { TestDatePicker } from '@/components/test-date-picker';
+import { CalendarDatePicker } from '@/components/calendar-date-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useJourneyStore } from '@/stores/journey-store';
 import type { JourneyState, LocalDate } from '@/types/journey';
+import { addYears, todayInLondon } from '@/utils/journey-dates';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -59,6 +60,8 @@ export default function JourneySetupScreen() {
   const [pickedDate, setPickedDate] = useState<LocalDate | null>(
     journey.state === 'booked' ? journey.testDate : null,
   );
+  const today = todayInLondon();
+  const maxTestDate = addYears(today, 1);
 
   const canSave = selectedState !== null && (selectedState !== 'booked' || pickedDate !== null);
 
@@ -82,6 +85,8 @@ export default function JourneySetupScreen() {
 
     if (selectedState === 'retake') {
       router.replace('/journey/result-letter');
+    } else if (selectedState === 'certified') {
+      router.replace('/journey/certificate');
     } else {
       close();
     }
@@ -142,7 +147,7 @@ export default function JourneySetupScreen() {
               <ThemedText type="caption" themeColor="textSecondary">
                 Test date
               </ThemedText>
-              <TestDatePicker value={pickedDate} onChange={setPickedDate} />
+              <CalendarDatePicker value={pickedDate} onChange={setPickedDate} minDate={today} maxDate={maxTestDate} />
             </View>
           ) : null}
         </ScrollView>

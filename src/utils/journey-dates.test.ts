@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   addDays,
+  addMonths,
   addYears,
   certificateExpiryDate,
   compareLocalDates,
@@ -11,6 +12,7 @@ import {
   formatLocalDateLong,
   isCertificateValid,
   isValidLocalDate,
+  monthsUntil,
   todayInLondon,
 } from './journey-dates';
 
@@ -59,6 +61,29 @@ describe('addYears', () => {
   it('rolls a leap-day anniversary forward when the target year has no 29 Feb', () => {
     expect(addYears('2024-02-29', 1)).toBe('2025-03-01');
     expect(addYears('2024-02-29', 4)).toBe('2028-02-29');
+  });
+});
+
+describe('addMonths', () => {
+  it('adds whole months, same day', () => {
+    expect(addMonths('2028-05-21', -6)).toBe('2027-11-21');
+    expect(addMonths('2026-08-26', 3)).toBe('2026-11-26');
+  });
+
+  it('crosses a year boundary', () => {
+    expect(addMonths('2026-01-15', -2)).toBe('2025-11-15');
+  });
+
+  it('normalises a day that does not exist in the target month', () => {
+    expect(addMonths('2026-01-31', 1)).toBe('2026-03-03');
+  });
+});
+
+describe('monthsUntil', () => {
+  it('counts whole calendar months, not just elapsed days', () => {
+    expect(monthsUntil('2028-05-21', '2026-05-21')).toBe(24);
+    expect(monthsUntil('2028-05-20', '2026-05-21')).toBe(23);
+    expect(monthsUntil('2026-05-21', '2026-05-21')).toBe(0);
   });
 });
 

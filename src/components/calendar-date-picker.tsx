@@ -5,9 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { BorderRadius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { LocalDate } from '@/types/journey';
-import { addYears, compareLocalDates, todayInLondon } from '@/utils/journey-dates';
-
-const MONTHS_AHEAD = 13;
+import { compareLocalDates, todayInLondon } from '@/utils/journey-dates';
 
 interface MonthOption {
   label: string;
@@ -15,11 +13,13 @@ interface MonthOption {
   month: number;
 }
 
-function buildMonthOptions(from: LocalDate, count: number): MonthOption[] {
-  const [startYear, startMonth] = from.split('-').map(Number);
+function buildMonthOptions(minDate: LocalDate, maxDate: LocalDate): MonthOption[] {
+  const [startYear, startMonth] = minDate.split('-').map(Number);
+  const [endYear, endMonth] = maxDate.split('-').map(Number);
+  const totalSpan = (endYear - startYear) * 12 + (endMonth - startMonth);
   const options: MonthOption[] = [];
 
-  for (let i = 0; i < count; i += 1) {
+  for (let i = 0; i <= totalSpan; i += 1) {
     const totalMonth = startMonth - 1 + i;
     const year = startYear + Math.floor(totalMonth / 12);
     const month = (totalMonth % 12) + 1;
@@ -42,21 +42,23 @@ function monthKey(date: LocalDate): string {
   return date.slice(0, 7);
 }
 
-interface TestDatePickerProps {
+interface CalendarDatePickerProps {
   value: LocalDate | null;
   onChange: (date: LocalDate) => void;
+  minDate: LocalDate;
+  maxDate: LocalDate;
 }
 
-export function TestDatePicker({ value, onChange }: TestDatePickerProps) {
+export function CalendarDatePicker({ value, onChange, minDate, maxDate }: CalendarDatePickerProps) {
   const theme = useTheme();
-  const today = useMemo(() => todayInLondon(), []);
-  const maxDate = useMemo(() => addYears(today, 1), [today]);
-  const monthOptions = useMemo(() => buildMonthOptions(today, MONTHS_AHEAD), [today]);
+  const monthOptions = useMemo(() => buildMonthOptions(minDate, maxDate), [minDate, maxDate]);
 
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(() => {
-    if (!value) return 0;
-    const idx = monthOptions.findIndex((m) => `${m.year}-${String(m.month).padStart(2, '0')}` === monthKey(value));
-    return idx >= 0 ? idx : 0;
+    const target = value ?? todayInLondon();
+    const idx = monthOptions.findIndex((m) => `${m.year}-${String(m.month).padStart(2, '0')}` === monthKey(target));
+    if (idx >= 0) return idx;
+    // Target month is outside the range — clamp to whichever end is closer.
+    return compareLocalDates(target, minDate) < 0 ? 0 : monthOptions.length - 1;
   });
 
   const selectedMonth = monthOptions[selectedMonthIndex];
@@ -69,13 +71,13 @@ export function TestDatePicker({ value, onChange }: TestDatePickerProps) {
     `${selectedMonth.year}-${String(selectedMonth.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   return (
-    <View style={styles.container} testID="test-date-picker">
+    <View style={styles.container} testID="calendar-date-picker">
       <View style={styles.monthRow}>
         {monthOptions.map((m, idx) => (
           <Pressable
             key={`${m.year}-${m.month}`}
             onPress={() => setSelectedMonthIndex(idx)}
-            testID={`test-date-picker-month-${idx}`}
+            testID={`calendar-date-picker-month-${idx}`}
             style={[
               styles.monthChip,
               {
@@ -93,14 +95,14 @@ export function TestDatePicker({ value, onChange }: TestDatePickerProps) {
       <View style={styles.dayGrid}>
         {dayCells.map((day) => {
           const date = dateFor(day);
-          const disabled = compareLocalDates(date, today) < 0 || compareLocalDates(date, maxDate) > 0;
+          const disabled = compareLocalDates(date, minDate) < 0 || compareLocalDates(date, maxDate) > 0;
           const selected = value === date;
           return (
             <Pressable
               key={date}
               disabled={disabled}
               onPress={() => onChange(date)}
-              testID={`test-date-picker-day-${date}`}
+              testID={`calendar-date-picker-day-${date}`}
               style={[
                 styles.dayCell,
                 {

@@ -2,13 +2,13 @@ import type { LocalDate } from '@/types/journey';
 
 const LOCAL_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-interface DateParts {
+export interface DateParts {
   year: number;
   month: number;
   day: number;
 }
 
-function parseLocalDate(date: LocalDate): DateParts {
+export function parseLocalDate(date: LocalDate): DateParts {
   const [year, month, day] = date.split('-').map(Number);
   return { year, month, day };
 }
@@ -69,6 +69,28 @@ export function addDays(date: LocalDate, days: number): LocalDate {
 export function addYears(date: LocalDate, years: number): LocalDate {
   const { year, month, day } = parseLocalDate(date);
   return utcDateToLocalDate(partsToUTCDate({ year: year + years, month, day }));
+}
+
+/**
+ * Adds whole months to a date, normalising an out-of-range day into the
+ * following month (e.g. 31 Jan + 1 month -> 3 Mar in a non-leap year),
+ * matching addYears' rollover behaviour.
+ */
+export function addMonths(date: LocalDate, months: number): LocalDate {
+  const { year, month, day } = parseLocalDate(date);
+  const totalMonths = month - 1 + months;
+  const newYear = year + Math.floor(totalMonths / 12);
+  const newMonth = (((totalMonths % 12) + 12) % 12) + 1;
+  return utcDateToLocalDate(partsToUTCDate({ year: newYear, month: newMonth, day }));
+}
+
+/** Whole calendar months from `from` to `target`. Negative when `target` is in the past. */
+export function monthsUntil(target: LocalDate, from: LocalDate = todayInLondon()): number {
+  const a = parseLocalDate(from);
+  const b = parseLocalDate(target);
+  let months = (b.year - a.year) * 12 + (b.month - a.month);
+  if (b.day < a.day) months -= 1;
+  return months;
 }
 
 /** Whole days from `from` to `to`. Negative when `to` is in the past. */
