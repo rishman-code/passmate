@@ -1,18 +1,90 @@
-# Sign image attributions
+# Question image attributions
 
-30 of the ~109 questions that reference a visual sign/marking/signal now
-have `image_url` populated (25 distinct images), sourced from official UK
-Department for Transport traffic sign artwork on Wikimedia Commons.
+**205 of the app's 714 questions now have `image_url` populated** (202
+distinct images). **All of them now come from the official DVSA source —
+the earlier Wikimedia-sourced images have been fully replaced.**
 
-**Hosting**: all 25 images are now re-hosted in this project's own public
-`sign-images` Supabase Storage bucket (created via the SQL below) rather
-than hotlinked from Wikimedia — every URL has been individually verified
-to resolve with a correct image content-type. This closes out the earlier
-production risk of Wikimedia rate-limiting (429s) under real app traffic.
-Two images with parentheses in their original filename ("(variant_1)",
-"(right)") hit a URL double-encoding bug on first upload and were
-re-uploaded under sanitized filenames (no special characters) — fixed and
-verified, worth remembering for any future uploads to this bucket.
+## Official DVSA images — sole source
+
+The user supplied the real official DVSA Category B theory test image set
+(313 files, `C:\Users\rishi\OneDrive\Pictures\DVSA Images`, confirmed by
+the user to be officially licensed by the DVSA) plus the official question
+bank spreadsheet (`Car (Cat B) QB Feb 2026.xlsx`, 758 questions) that maps
+each question to its exact image filename via `Stem.gif` / `A.gif` /
+`B.gif` / `C.gif` / `D.gif` columns.
+
+**Matching method**: our AI-generated question bank turned out to closely
+reproduce this official bank's wording in most cases (likely because the
+generator, when asked for "factually-accurate DVSA-style questions", drew
+on real DVSA questions from its training data). This meant matching could
+be done by exact/near-exact text comparison — question text + all four
+options, normalized and compared as a word-overlap score — rather than by
+visually guessing among 313 uncaptioned images. Full pipeline:
+
+1. Parsed the spreadsheet, kept only rows with a non-empty `Stem.gif`.
+2. For every question in our bank still missing `image_url`, scored it
+   against every image-bearing official row (stem + 4 options, normalized
+   word-overlap).
+3. **171 questions scored a perfect 1.00** (verbatim-identical text) —
+   treated as safe to auto-match.
+4. **6 questions scored 0.60–0.67** — manually reviewed every one before
+   using any of them, because they turned out to be a trap: all 6 were
+   competing against a sibling question that already had its own 1.00
+   match to the same official item. On inspection, **4 of the 6 were
+   genuinely different scenarios that just share vocabulary** with their
+   1.00 sibling (a "moped" question scored 0.63 against a cyclist
+   question's image; "red cross over your lane only" scored 0.63 against
+   "red cross over every lane"; a "busy main road, wrong direction"
+   question scored against a "one-way street, wrong route" image; a
+   "bicycle wheel between parked cars" question scored against a "ball
+   bounces into the road" image) — these were correctly left unmatched
+   rather than forced. **The other 2 were legitimate rephrasings of the
+   same scenario as their sibling** and were included after manual
+   verification: cyclist-signalling-right-at-roundabout, and
+   red-lights-still-flashing-after-train-passes-level-crossing.
+5. Verified all 173 referenced files exist locally (they did, 0 missing),
+   then read each local file directly and uploaded it to the `sign-images`
+   Supabase Storage bucket, sanitizing filenames (prefixed `dvsa_`, special
+   characters stripped) to avoid the URL-encoding bug noted below. All
+   updated rows verified to resolve (200 status, correct content-type).
+
+**This also revealed the original problem was undercounted**: the
+~109-question estimate came from a keyword search for "sign"/"marking" in
+question text. The official spreadsheet shows image-bearing questions
+across many more categories that don't use those words at all — e.g.
+"What's the main hazard shown in this picture?" or "What should the
+driver of the red car (arrowed) do?" (Hazard Awareness), cyclist/pedestrian
+scenarios (Vulnerable Road Users), motorway gantry scenarios (Motorway
+Rules). Several of the "structurally unfixable" photographic
+hazard-perception questions from earlier passes turned out to be fixable
+after all once matched against the real official photos.
+
+**License**: officially licensed by the DVSA per the user, who supplied
+the files directly — recorded here as stated; this project has no
+independent way to verify DVSA's license terms beyond that.
+
+## Superseded: Wikimedia Commons (no longer used)
+
+Three early passes sourced 32 questions' worth of UK road sign diagrams
+from Wikimedia Commons (Open Government Licence v1.0 / Crown copyright,
+individually verified on each file's own Commons page) before the official
+DVSA source became available. **These have all been replaced** with the
+official equivalents once the real question-bank spreadsheet made it
+possible to match every one of them with a perfect 1.00 text-similarity
+score (verbatim-identical question + option text) — no manual review
+needed, all 32 were unambiguous. The old Wikimedia-sourced files are still
+sitting in the `sign-images` bucket, orphaned (no question references
+them anymore) — harmless, but could be deleted as cleanup if wanted. See
+git history on this file for the detailed sign-by-sign table from those
+passes if needed for reference.
+
+## Hosting
+
+All images live in this project's own public `sign-images` Supabase
+Storage bucket, not hotlinked externally — avoids the Wikimedia
+rate-limiting (429s) observed when hitting their thumbnail service
+directly under repeated access, back when that was still the source.
+Bucket setup (idempotent, safe to re-run):
 
 ```sql
 insert into storage.buckets (id, name, public) values ('sign-images', 'sign-images', true) on conflict (id) do nothing;
@@ -22,90 +94,28 @@ drop policy if exists "Anyone can upload sign images" on storage.objects;
 create policy "Anyone can upload sign images" on storage.objects for insert with check (bucket_id = 'sign-images');
 ```
 
-All images are Crown copyright, published under the **Open Government
-Licence v1.0** (some also independently public domain in the US as
-non-copyrightable government works), which permits commercial reuse with
-attribution — appropriate for this app. The table below still links to
-each image's original Wikimedia Commons source page for attribution
-purposes; the live `image_url` on each question points to the re-hosted
-Supabase Storage copy, not these Commons links directly.
+**Known pitfall**: filenames with parentheses (e.g. `(variant_1)`) hit a
+URL double-encoding bug on upload — sanitize filenames to
+alphanumerics/dashes/underscores/dots only before uploading to this
+bucket.
 
-| Sign | Diagram | Questions | Source |
-|---|---|---|---|
-| Stop | 601.1 | 4 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_601.1.svg |
-| National speed limit applies (derestriction) | — | 2 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_derestriction.svg |
-| No entry | 616 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_616.svg |
-| Crossroads ahead | 504.1 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_504.1_(variant_1).svg |
-| Roundabout ahead | 510 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_510.svg |
-| T-junction ahead | 505.1 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_505.1_(right).svg |
-| Motor vehicles prohibited | 619 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_619.svg |
-| No right turn | 612 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_612.svg |
-| Solo motor cycles prohibited | 619.2 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_619.2.svg |
-| One-way traffic | 607 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_607.svg |
-| Mini-roundabout | 611.1 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_611.1.svg |
-| End of motorway regulations | 2931 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_2931.svg |
-| Pedestrian (zebra) crossing ahead | 544 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_544.svg |
-| Risk of ice or packed snow ahead | 554.2 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_554.2.svg |
-| Ford ahead / water across the road | 554 | 2 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_554.svg |
-| Side winds likely ahead | 581 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_581.svg |
-| Tunnel ahead | 529.1 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_529.1.svg |
-| Hump bridge ahead | 528 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_528.svg |
-| Road hump(s) ahead | 557.1 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_557.1.svg |
-| No stopping (clearway) | 642 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_642.svg |
-| No overtaking | 632 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_632.svg |
-| Give priority to vehicles from the opposite direction | 615 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_615.svg |
-| Priority over vehicles from the opposite direction | 811 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_811.svg |
-| Minimum speed limit 30 mph | 672 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_672.svg |
-| End of 30 mph minimum speed limit | 673 | 1 | https://commons.wikimedia.org/wiki/File:UK_traffic_sign_673.svg |
+## What's likely still missing
 
-## Not matched (still `image_url: null`)
+The official spreadsheet's 758 questions include some images not yet
+matched to our bank (our bank has 714 questions total, generated
+independently, so not every official question has a corresponding one
+here, and vice versa some of our questions may be paraphrased differently
+enough that the word-overlap matcher missed a real match — anything below
+the 1.00/manually-verified bar was deliberately left alone rather than
+guessed). A background pass was also independently working through the
+same gap via visual inspection of the raw DVSA image files (slower, no
+index) in parallel with this spreadsheet-driven pass — check for its
+results too since it may have found additional matches for questions the
+spreadsheet approach didn't cover, particularly ones where our wording
+diverges more from the official bank.
 
-Roughly 79 of the ~109 candidate questions remain unmatched. They fall
-into a few groups:
-
-1. **Photographic hazard-perception scenes** (e.g. "What's the main hazard
-   shown in this picture?", "the red car (arrowed)") — these need an
-   actual photograph of a specific driving scenario, not a standardized
-   sign graphic. No suitable openly-licensed substitute exists.
-2. **Ambiguous/variable symbols** — e.g. the diversion-route question
-   explicitly states the symbol "may be a black triangle, square, circle
-   or diamond shape," so there's no single correct image.
-3. **Additional distinct signs, still sourceable but not yet found** —
-   motorway gantry variants (lane control signals, countdown markers,
-   red-cross-per-lane), arm signals (police and hand signals), road
-   markings (zigzag lines, hatched areas, give-way lines, mini-roundabout
-   arrows, overtake-return arrows, road-hump warning triangles), waiting-
-   restriction plates (see caution below — sign 661.1 looked promising but
-   turned out to be a different, more specific sign), the school-bus rear
-   sign (covers 3 questions), the cycle-route sign (covers 2),
-   traffic-lights-out-of-order (covers 2), tram signs (route-for-trams,
-   give-way-to-trams, trams-crossing-ahead — covers ~4 questions; Commons
-   search results for these repeatedly returned filenames that turned out
-   not to exist or not to match on verification, e.g. a guessed
-   "790-V1.svg" 404'd), bus/tram lane variants, and brown tourist signs.
-
-**A caution for whoever continues this**: Wikimedia Commons' "UK traffic
-sign NNN.svg" numbering (from the DfT's Traffic Signs Regulations
-schedule) is NOT reliably guessable from a sign's common name — several
-numbers checked across passes turned out to be completely different signs
-than expected (642 was assumed to be "end of controlled parking zone" but
-is actually "no stopping/clearway"; 516 assumed "quayside or river bank"
-turned out to be "road narrows on both sides"; 633 assumed "no waiting"
-is actually a police "STOP" sign; 661.1 assumed generic "waiting
-restrictions" turned out to be the specific "free parking with time
-restrictions" sign). AI-summarized Commons/search-result listings were
-also unreliable for mapping number → meaning, and sometimes named files
-that don't actually exist. **Always open the individual file page
-directly and read its actual description before using it or recording it
-as a match; verify the exact URL resolves (watch for HTTP 429 from
-Wikimedia's own rate limiting on rapid successive checks — that's not the
-same as a broken link, just space out repeated requests).** The DfT's own
-"Traffic Signs Manual" / "Know Your Traffic Signs" PDF has an authoritative
-number index and would likely be faster and more reliable than Commons
-search for the remaining signs, especially the tram and arm-signal ones.
-
-**Confirmed working, higher-confidence matches from this pass**: no
-overtaking (632), give priority to oncoming traffic (615), priority over
-oncoming traffic (811), minimum speed 30mph (672), end of minimum speed
-30mph (673) — all individually verified on their own Commons file pages
-before use, same standard as the rest of this document.
+To extend coverage further: re-run the matching script with a lower
+threshold and manually review each candidate the way the 6 borderline
+ones above were reviewed (word-overlap alone is not safe below ~1.00, as
+shown by the 4 false positives caught this pass), or work from the
+official spreadsheet's remaining un-mapped rows directly.
