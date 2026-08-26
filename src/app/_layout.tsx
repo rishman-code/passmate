@@ -105,6 +105,10 @@ export default function RootLayout() {
           name="paywall"
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
+        <Stack.Screen
+          name="journey/setup"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
       </Stack>
       {!session && <Redirect href="/auth/sign-in" />}
       {session && onboardingChecked && needsOnboarding && <Redirect href="/onboarding" />}

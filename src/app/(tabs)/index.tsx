@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { JourneyPromptBanner } from '@/components/journey-prompt-banner';
 import { ProgressBar } from '@/components/progress-bar';
 import { StatCard } from '@/components/stat-card';
 import { ThemedText } from '@/components/themed-text';
@@ -16,11 +17,13 @@ import {
   MOCK_TEST_QUESTION_COUNT,
   PREMIUM_PRICE,
 } from '@/constants/categories';
+import { JOURNEY_PROMPT_THRESHOLD } from '@/constants/journey';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useQuestions } from '@/hooks/use-questions';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchAllQuestions } from '@/services/questions';
 import { usePracticeStore } from '@/stores/practice-store';
+import { useJourneyStore } from '@/stores/journey-store';
 import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { buildAdaptiveQuestionQueue } from '@/utils/practice';
@@ -38,7 +41,10 @@ export default function HomeScreen() {
   const openPaywall = useSubscriptionStore((s) => s.openPaywall);
   const setQuestions = usePracticeStore((s) => s.setQuestions);
   const setCategoryFilter = usePracticeStore((s) => s.setCategoryFilter);
+  const hasSeenJourneyPrompt = useJourneyStore((s) => s.hasSeenPrompt);
   const [isStarting, setIsStarting] = useState(false);
+
+  const showJourneyPrompt = !hasSeenJourneyPrompt && totalAnswered >= JOURNEY_PROMPT_THRESHOLD;
 
   const startAdaptivePractice = async () => {
     setIsStarting(true);
@@ -80,6 +86,8 @@ export default function HomeScreen() {
               Your AI-powered DVSA theory test companion
             </ThemedText>
           </View>
+
+          {showJourneyPrompt ? <JourneyPromptBanner /> : null}
 
           {!isPremium ? (
             <Pressable
