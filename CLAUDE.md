@@ -238,13 +238,29 @@ Full palette is in `src/constants/colors.ts` with light/dark variants.
 ## Feature Behaviour
 
 ### Authentication
-- Supabase Auth with email + password
+- Supabase Auth with email + password, plus Sign in with Apple (iOS only)
 - Display name stored in `user_metadata.name`
 - Sessions persisted via localStorage on web, AsyncStorage on native
 - `src/lib/supabase.ts` uses an SSR-safe storage wrapper (guards on `typeof window`)
 - On sign-in: `loadFromSupabase(user.id)` syncs progress from Supabase
 - On sign-out: `reset()` clears local Zustand state
-- Root `_layout.tsx` redirects unauthenticated users to `/auth/sign-in`
+- Root `_layout.tsx` redirects unauthenticated users to `/auth/sign-in`, unless
+  guest mode is active (see below)
+
+**Sign in with Apple** (`signInWithApple()` in `src/lib/auth.ts`): native
+`expo-apple-authentication` button (only renders on `Platform.OS === 'ios'`),
+SHA256 nonce round-trip, then `supabase.auth.signInWithIdToken({ provider: 'apple', ... })`.
+**Needs setup that only a human with dashboard access can do** before it will
+actually authenticate — see "What is blocked" below.
+
+**Guest mode** (`src/lib/guest-mode.ts`): tapping "Not now — continue without
+an account" on sign-in sets a persisted flag that lets the root layout gate
+pass without a session. Progress/journey/mistake-ledger stores already work
+local-only when there's no `userId` set, so guest data just isn't synced to
+Supabase — it stays on-device until the user signs in for real (which clears
+the flag and starts syncing going forward; existing local guest data is not
+retroactively uploaded). Profile screen shows a "Guest" state with a Sign In
+CTA instead of account info + Sign Out.
 
 ### Adaptive Practice
 Questions are weighted by performance:
@@ -324,6 +340,16 @@ Tracked in `progress-store.ts`:
 - **Testing on physical iPhone** — needs Apple Developer account
 - **App Store submission** — needs Apple Developer account
 - **Push notifications delivery** — needs Apple Developer / APNs certificates
+- **Sign in with Apple actually authenticating** — the code path is built
+  (`src/lib/auth.ts` `signInWithApple()`, button on the sign-in screen), but
+  needs two pieces of external config that only a human can do:
+  1. Enable the "Sign in with Apple" capability for the app's bundle ID in
+     the Apple Developer portal.
+  2. Add Apple as an OAuth provider in the Supabase dashboard
+     (Authentication → Providers → Apple), which needs a Services ID,
+     Team ID, Key ID, and private key from Apple.
+  Until both are done, tapping the button will fail (Supabase will reject
+  the `signInWithIdToken` call with a "provider not enabled" style error).
 
 ### What could be built next
 1. `expo-secure-store` for auth tokens (medium security improvement — store in Keychain on native)

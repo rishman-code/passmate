@@ -26,5 +26,12 @@ export interface UserJourney {
   testDate: LocalDate | null;
   lastResult: TestResult | null;
   certificate: Certificate | null;
+  /**
+   * Self-reported during onboarding, before any real practice data exists.
+   * Once the user has actually answered questions, real category accuracy
+   * is the better signal — this is a starting prior, not overwritten by
+   * practice but naturally outweighed by it in plan-building.
+   */
+  selfReportedWeakCategories: DVSACategory[];
   updatedAt: string;
 }
