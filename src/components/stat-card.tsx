@@ -47,6 +47,7 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: 30,
+    lineHeight: 36,
     fontFamily: Fonts.displayBold,
     letterSpacing: -0.5,
   },

@@ -13,6 +13,15 @@ interface ButtonProps extends PressableProps {
   variant?: ButtonVariant;
   loading?: boolean;
   fullWidth?: boolean;
+  /**
+   * Surface color this button sits on. Only matters for variant="outline":
+   * the button needs an opaque fill (not literal transparency), or the
+   * hard-shadow backing rect behind it shows through the entire button
+   * instead of just its offset edge. Defaults to the page background --
+   * pass the enclosing card's own background color when placing an
+   * outline button on a card (see countdown-card.tsx, profile.tsx).
+   */
+  surfaceColor?: string;
 }
 
 const SHADOW_OFFSET = 4;
@@ -27,6 +36,7 @@ export function Button({
   onPress,
   onPressIn,
   onPressOut,
+  surfaceColor,
   ...props
 }: ButtonProps) {
   const theme = useTheme();
@@ -41,7 +51,7 @@ export function Button({
         ? theme.error
         : variant === 'secondary'
           ? theme.backgroundElement
-          : 'transparent';
+          : (surfaceColor ?? theme.background);
 
   const textColor =
     variant === 'primary' || variant === 'danger'
@@ -57,8 +67,16 @@ export function Button({
     onPress?.(event);
   };
 
+  // A plain-object style (e.g. { flex: 1 } to share a row with another
+  // button) has to reach this outer wrapper too, not just the inner
+  // Pressable -- the wrapper is what the parent flex container actually
+  // sizes, so without this a caller's flex/width/margin silently does
+  // nothing and the wrapper (and the shadow-backing rect sized from it)
+  // can end up a different size than the visible button.
+  const staticStyle = typeof style === 'function' ? undefined : style;
+
   return (
-    <View style={[styles.wrapper, fullWidth && styles.fullWidth]}>
+    <View style={[styles.wrapper, fullWidth && styles.fullWidth, staticStyle]}>
       {Platform.OS !== 'web' && showShadow ? (
         // A solid backing rect, not a native shadow: iOS shadow props rasterize the
         // view's own alpha content, so on a transparent (outline) background they'd

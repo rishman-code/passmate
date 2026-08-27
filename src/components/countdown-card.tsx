@@ -64,6 +64,7 @@ export function CountdownCard({
         <Button
           title="Review your mistakes"
           variant="outline"
+          surfaceColor={theme.card}
           onPress={() => router.push('/mistake-ledger')}
           fullWidth
           testID="countdown-card-mistake-ledger-button"
@@ -122,6 +123,7 @@ export function CountdownCard({
           <Button
             title="Change your test date"
             variant="outline"
+            surfaceColor={theme.card}
             onPress={() => router.push('/journey/setup')}
             fullWidth
             testID="countdown-card-reschedule-button"

@@ -140,6 +140,14 @@ export default function MockTestSessionScreen() {
             {answeredCount}/{MOCK_TEST_QUESTION_COUNT} answered
           </ThemedText>
           <View style={styles.footerButtons}>
+            <Button
+              title="Previous"
+              variant="outline"
+              onPress={previousQuestion}
+              disabled={currentIndex === 0}
+              style={styles.footerBtn}
+              testID="mock-test-session-previous-button"
+            />
             {currentIndex < questions.length - 1 ? (
               <Button title="Next" onPress={nextQuestion} style={styles.footerBtn} />
             ) : (

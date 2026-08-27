@@ -157,6 +157,7 @@ export default function ProfileScreen() {
               <Button
                 title="Edit"
                 variant="outline"
+                surfaceColor={theme.backgroundElement}
                 onPress={() => router.push('/journey/setup')}
                 testID="profile-edit-journey-button"
               />
