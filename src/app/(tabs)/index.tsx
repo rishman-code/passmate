@@ -33,6 +33,7 @@ import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { daysUntil } from '@/utils/journey-dates';
 import { buildAdaptiveQuestionQueue } from '@/utils/practice';
+import { buildPlan } from '@/utils/plan';
 
 const HP_PASS_MARK = 44;
 const HP_MAX = 75;
@@ -56,6 +57,14 @@ export default function HomeScreen() {
   const [isStarting, setIsStarting] = useState(false);
 
   const showJourneyPrompt = !hasSeenJourneyPrompt && totalAnswered >= JOURNEY_PROMPT_THRESHOLD;
+
+  const plan = buildPlan(
+    journey.state === 'booked' ? journey.testDate : null,
+    weakestCategories.map((c) => c.category as DVSACategory),
+    journey.selfReportedWeakCategories,
+    mockTestResults,
+    overallAccuracy,
+  );
 
   const startAdaptivePractice = async () => {
     setIsStarting(true);
@@ -138,6 +147,7 @@ export default function HomeScreen() {
               mockTestResults={mockTestResults}
               overallAccuracy={overallAccuracy}
               weakestCategory={weakestCategories[0]?.category ?? null}
+              plan={plan}
             />
           ) : null}
 

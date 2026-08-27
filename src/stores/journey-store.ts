@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import type { DVSACategory } from '@/constants/categories';
 import { supabase } from '@/lib/supabase';
 import type { Certificate, JourneyState, LocalDate, TestResult, UserJourney } from '@/types/journey';
 
@@ -11,6 +12,7 @@ function defaultJourney(): UserJourney {
     testDate: null,
     lastResult: null,
     certificate: null,
+    selfReportedWeakCategories: [],
     updatedAt: new Date().toISOString(),
   };
 }
@@ -20,6 +22,7 @@ interface JourneyRow {
   test_date: LocalDate | null;
   last_result: TestResult | null;
   certificate: Certificate | null;
+  self_reported_weak_topics: DVSACategory[] | null;
   updated_at: string;
 }
 
@@ -49,7 +52,7 @@ export const useJourneyStore = create<JourneyStoreState>()(
 
         const { data } = await supabase
           .from('user_journey')
-          .select('state, test_date, last_result, certificate, updated_at')
+          .select('state, test_date, last_result, certificate, self_reported_weak_topics, updated_at')
           .eq('user_id', userId)
           .maybeSingle<JourneyRow>();
 
@@ -60,6 +63,7 @@ export const useJourneyStore = create<JourneyStoreState>()(
               testDate: data.test_date,
               lastResult: data.last_result,
               certificate: data.certificate,
+              selfReportedWeakCategories: data.self_reported_weak_topics ?? [],
               updatedAt: data.updated_at,
             },
           });
@@ -84,6 +88,7 @@ export const useJourneyStore = create<JourneyStoreState>()(
                 test_date: journey.testDate,
                 last_result: journey.lastResult,
                 certificate: journey.certificate,
+                self_reported_weak_topics: journey.selfReportedWeakCategories,
                 updated_at: journey.updatedAt,
               })
               .then();
