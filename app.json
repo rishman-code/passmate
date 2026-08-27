@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.passmate.app",
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.passmate.app",
@@ -28,6 +29,7 @@
     "plugins": [
       "expo-router",
       "expo-dev-client",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {
