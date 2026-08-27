@@ -23,7 +23,7 @@ interface JourneyOption {
   body: string;
 }
 
-const OPTIONS: JourneyOption[] = [
+export const JOURNEY_OPTIONS: JourneyOption[] = [
   {
     state: 'booked',
     icon: 'calendar-outline',
@@ -104,7 +104,7 @@ export default function JourneySetupScreen() {
           </View>
 
           <View style={styles.options}>
-            {OPTIONS.map((option) => {
+            {JOURNEY_OPTIONS.map((option) => {
               const selected = selectedState === option.state;
               return (
                 <Pressable

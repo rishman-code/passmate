@@ -22,6 +22,7 @@ import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 import { useCertificateExpiryWatch } from '@/hooks/use-certificate-expiry-watch';
+import { isGuestMode } from '@/lib/guest-mode';
 import { hasSeenOnboarding } from '@/lib/onboarding';
 import { useAuthStore } from '@/stores/auth-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
@@ -34,6 +35,8 @@ export default function RootLayout() {
   const session = useAuthStore((s) => s.session);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [guestChecked, setGuestChecked] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   useCertificateExpiryWatch();
 
@@ -57,6 +60,10 @@ export default function RootLayout() {
     hasSeenOnboarding().then((seen) => {
       setNeedsOnboarding(!seen);
       setOnboardingChecked(true);
+    });
+    isGuestMode().then((guest) => {
+      setIsGuest(guest);
+      setGuestChecked(true);
     });
   }, [initialize, initializeAuth]);
 
@@ -122,8 +129,10 @@ export default function RootLayout() {
         />
         <Stack.Screen name="mistake-ledger" options={{ headerShown: true, title: 'Mistake Ledger' }} />
       </Stack>
-      {!session && <Redirect href="/auth/sign-in" />}
-      {session && onboardingChecked && needsOnboarding && <Redirect href="/onboarding" />}
+      {!session && guestChecked && !isGuest && <Redirect href="/auth/sign-in" />}
+      {(session || isGuest) && onboardingChecked && needsOnboarding && (
+        <Redirect href="/onboarding" />
+      )}
     </ThemeProvider>
   );
 }

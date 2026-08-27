@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   },
   caption: {
     fontSize: 12,
-    lineHeight: 16,
+    lineHeight: 18,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
     fontFamily: Fonts.bodyBold,

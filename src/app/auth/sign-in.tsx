@@ -1,3 +1,4 @@
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -14,8 +15,9 @@ import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
-import { friendlyAuthError, signIn } from '@/lib/auth';
 import { useTheme } from '@/hooks/use-theme';
+import { friendlyAuthError, signIn, signInWithApple } from '@/lib/auth';
+import { setGuestMode } from '@/lib/guest-mode';
 import { useJourneyStore } from '@/stores/journey-store';
 import { useProgressStore } from '@/stores/progress-store';
 
@@ -27,6 +29,13 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAppleLoading, setIsAppleLoading] = useState(false);
+
+  const enterApp = async (userId: string | undefined) => {
+    await setGuestMode(false);
+    if (userId) await Promise.all([loadFromSupabase(userId), loadJourneyFromSupabase(userId)]);
+    router.replace('/');
+  };
 
   const handleSignIn = async () => {
     if (!email.trim() || !password) {
@@ -37,13 +46,33 @@ export default function SignInScreen() {
     setIsLoading(true);
     try {
       const { user } = await signIn(email.trim().toLowerCase(), password);
-      if (user) await Promise.all([loadFromSupabase(user.id), loadJourneyFromSupabase(user.id)]);
-      router.replace('/');
+      await enterApp(user?.id);
     } catch (e) {
       setError(friendlyAuthError(e instanceof Error ? e.message : ''));
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAppleSignIn = async () => {
+    setError(null);
+    setIsAppleLoading(true);
+    try {
+      const { user } = await signInWithApple();
+      await enterApp(user?.id);
+    } catch (e) {
+      const code = (e as { code?: string } | null)?.code;
+      if (code !== 'ERR_REQUEST_CANCELED') {
+        setError('Apple sign-in failed. Please try again.');
+      }
+    } finally {
+      setIsAppleLoading(false);
+    }
+  };
+
+  const handleContinueAsGuest = async () => {
+    await setGuestMode(true);
+    router.replace('/');
   };
 
   return (
@@ -60,6 +89,32 @@ export default function SignInScreen() {
               <ThemedText type="title">Welcome back</ThemedText>
               <ThemedText themeColor="textSecondary">Sign in to your PassMate account.</ThemedText>
             </View>
+
+            {Platform.OS === 'ios' ? (
+              <View style={styles.appleSection}>
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={28}
+                  style={styles.appleButton}
+                  onPress={handleAppleSignIn}
+                  testID="apple-sign-in-button"
+                />
+                {isAppleLoading ? (
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.centeredText}>
+                    Signing in…
+                  </ThemedText>
+                ) : null}
+
+                <View style={styles.divider}>
+                  <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+                  <ThemedText type="small" themeColor="textSecondary">
+                    or
+                  </ThemedText>
+                  <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+                </View>
+              </View>
+            ) : null}
 
             <View style={styles.form}>
               <View style={styles.field}>
@@ -127,6 +182,15 @@ export default function SignInScreen() {
                 Create one
               </ThemedText>
             </View>
+
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={styles.guestLink}
+              onPress={handleContinueAsGuest}
+              testID="continue-as-guest-link">
+              Not now — continue without an account
+            </ThemedText>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -145,6 +209,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: { gap: Spacing.one },
+  appleSection: { gap: Spacing.three },
+  appleButton: {
+    width: '100%',
+    height: 56,
+  },
+  centeredText: { textAlign: 'center' },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
   form: { gap: Spacing.three },
   field: { gap: Spacing.one },
   input: {
@@ -164,5 +243,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  guestLink: {
+    textAlign: 'center',
+    textDecorationLine: 'underline',
   },
 });

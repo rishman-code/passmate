@@ -13,7 +13,8 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "2"
+      "buildNumber": "2",
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.passmate.app",
@@ -32,6 +33,7 @@
     "plugins": [
       "expo-router",
       "expo-dev-client",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {

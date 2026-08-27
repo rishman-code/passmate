@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { friendlyAuthError, signUp } from '@/lib/auth';
+import { setGuestMode } from '@/lib/guest-mode';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function SignUpScreen() {
@@ -33,6 +34,7 @@ export default function SignUpScreen() {
     setIsLoading(true);
     try {
       await signUp(name.trim(), email.trim().toLowerCase(), password);
+      await setGuestMode(false);
       router.replace('/');
     } catch (e) {
       setError(friendlyAuthError(e instanceof Error ? e.message : ''));

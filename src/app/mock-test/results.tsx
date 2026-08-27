@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
-import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Linking, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as StoreReview from 'expo-store-review';
 
 import { Button } from '@/components/button';
+import { RateAppModal } from '@/components/rate-app-modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MOCK_TEST_PASS_SCORE, MOCK_TEST_QUESTION_COUNT } from '@/constants/categories';
@@ -12,12 +14,16 @@ import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useMockTestStore } from '@/stores/mock-test-store';
 import { useProgressStore } from '@/stores/progress-store';
+import { useRateAppStore } from '@/stores/rate-app-store';
 import { formatTime } from '@/utils/practice';
 
 export default function MockTestResultsScreen() {
   const theme = useTheme();
   const recordMockTestResult = useProgressStore((s) => s.recordMockTestResult);
   const reset = useMockTestStore((s) => s.reset);
+  const recordRateAppChoice = useRateAppStore((s) => s.recordChoice);
+  const canPromptRateApp = useRateAppStore((s) => s.canPrompt);
+  const [showRatePrompt, setShowRatePrompt] = useState(false);
 
   const score = useMockTestStore((s) => s.getScore());
   const passed = useMockTestStore((s) => s.getPassed());
@@ -36,8 +42,35 @@ export default function MockTestResultsScreen() {
         completed_at: new Date().toISOString(),
         time_taken_seconds: timeTaken,
       });
+
+      if (passed && canPromptRateApp()) {
+        const timer = setTimeout(() => setShowRatePrompt(true), 1200);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [score, passed, timeTaken, recordMockTestResult]);
+  }, [score, passed, timeTaken, recordMockTestResult, canPromptRateApp]);
+
+  const handleRateAppNever = () => {
+    recordRateAppChoice('never');
+    setShowRatePrompt(false);
+  };
+
+  const handleRateAppLater = () => {
+    recordRateAppChoice('later');
+    setShowRatePrompt(false);
+  };
+
+  const handleRateAppRateNow = async () => {
+    recordRateAppChoice('rated');
+    setShowRatePrompt(false);
+
+    if (await StoreReview.isAvailableAsync()) {
+      await StoreReview.requestReview();
+      return;
+    }
+    const url = StoreReview.storeUrl();
+    if (url) Linking.openURL(url);
+  };
 
   const handleDone = () => {
     reset();
@@ -108,6 +141,13 @@ export default function MockTestResultsScreen() {
           />
         </View>
       </SafeAreaView>
+
+      <RateAppModal
+        visible={showRatePrompt}
+        onNever={handleRateAppNever}
+        onLater={handleRateAppLater}
+        onRateNow={handleRateAppRateNow}
+      />
     </ThemedView>
   );
 }

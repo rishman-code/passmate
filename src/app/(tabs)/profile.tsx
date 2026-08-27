@@ -41,7 +41,7 @@ export default function ProfileScreen() {
   const resetJourney = useJourneyStore((s) => s.reset);
   const resetMistakeLedger = useMistakeLedgerStore((s) => s.reset);
 
-  const displayName = (user?.user_metadata?.name as string | undefined) ?? user?.email ?? 'Account';
+  const displayName = user ? ((user.user_metadata?.name as string | undefined) ?? user.email ?? 'Account') : 'Guest';
 
   const handleRestore = async () => {
     const restored = await restore();
@@ -167,6 +167,14 @@ export default function ProfileScreen() {
             <ThemedText type="caption" themeColor="textSecondary">
               Account
             </ThemedText>
+            {!user ? (
+              <View
+                style={[styles.guestNotice, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  You're browsing as a guest. Sign in to sync your progress across devices.
+                </ThemedText>
+              </View>
+            ) : null}
             {isPremium ? (
               <Button
                 title="Manage Subscription"
@@ -184,13 +192,22 @@ export default function ProfileScreen() {
               fullWidth
               testID="profile-restore-button"
             />
-            <Button
-              title="Sign Out"
-              variant="outline"
-              onPress={handleSignOut}
-              fullWidth
-              testID="profile-sign-out-button"
-            />
+            {user ? (
+              <Button
+                title="Sign Out"
+                variant="outline"
+                onPress={handleSignOut}
+                fullWidth
+                testID="profile-sign-out-button"
+              />
+            ) : (
+              <Button
+                title="Sign In"
+                onPress={() => router.push('/auth/sign-in')}
+                fullWidth
+                testID="profile-sign-in-button"
+              />
+            )}
           </View>
 
           <View style={[styles.info, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
@@ -291,6 +308,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bodyBold,
   },
   info: {
+    padding: Spacing.three,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
+  },
+  guestNotice: {
     padding: Spacing.three,
     borderRadius: BorderRadius.md,
     borderWidth: 1.5,
