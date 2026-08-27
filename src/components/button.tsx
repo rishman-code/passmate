@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
-import { Platform, ActivityIndicator, Pressable, StyleSheet, type PressableProps } from 'react-native';
+import { useState } from 'react';
+import { Platform, ActivityIndicator, Pressable, StyleSheet, View, type PressableProps } from 'react-native';
 
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -14,6 +15,8 @@ interface ButtonProps extends PressableProps {
   fullWidth?: boolean;
 }
 
+const SHADOW_OFFSET = 4;
+
 export function Button({
   title,
   variant = 'primary',
@@ -22,10 +25,14 @@ export function Button({
   disabled,
   style,
   onPress,
+  onPressIn,
+  onPressOut,
   ...props
 }: ButtonProps) {
   const theme = useTheme();
   const isDisabled = disabled || loading;
+  const [isPressed, setIsPressed] = useState(false);
+  const showShadow = !(isPressed && !isDisabled);
 
   const backgroundColor =
     variant === 'primary'
@@ -51,34 +58,68 @@ export function Button({
   };
 
   return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.button,
-        fullWidth && styles.fullWidth,
-        {
-          backgroundColor,
-          borderColor: theme.borderHard,
-          opacity: isDisabled ? 0.45 : 1,
-          transform: [{ translateY: pressed && !isDisabled ? 3 : 0 }],
-          ...(pressed && !isDisabled ? {} : tactileShadow(theme.borderHard, 4)),
-        },
-        typeof style === 'function'
-          ? style({ pressed, hovered: false } as Parameters<typeof style>[0])
-          : style,
-      ]}
-      disabled={isDisabled}
-      onPress={handlePress}
-      {...props}>
-      {loading ? (
-        <ActivityIndicator color={textColor} />
-      ) : (
-        <ThemedText style={[styles.label, { color: textColor }]}>{title}</ThemedText>
-      )}
-    </Pressable>
+    <View style={[styles.wrapper, fullWidth && styles.fullWidth]}>
+      {Platform.OS !== 'web' && showShadow ? (
+        // A solid backing rect, not a native shadow: iOS shadow props rasterize the
+        // view's own alpha content, so on a transparent (outline) background they'd
+        // paint a ghost copy of the label text instead of a plain offset rectangle.
+        <View
+          pointerEvents="none"
+          style={[
+            styles.shadowBacking,
+            fullWidth && styles.fullWidth,
+            { backgroundColor: theme.borderHard },
+          ]}
+        />
+      ) : null}
+      <Pressable
+        style={({ pressed }) => [
+          styles.button,
+          fullWidth && styles.fullWidth,
+          {
+            backgroundColor,
+            borderColor: theme.borderHard,
+            opacity: isDisabled ? 0.45 : 1,
+            transform: [{ translateY: pressed && !isDisabled ? 3 : 0 }],
+            ...(Platform.OS === 'web' && showShadow ? tactileShadow(theme.borderHard, SHADOW_OFFSET) : null),
+          },
+          typeof style === 'function'
+            ? style({ pressed, hovered: false } as Parameters<typeof style>[0])
+            : style,
+        ]}
+        disabled={isDisabled}
+        onPress={handlePress}
+        onPressIn={(event) => {
+          setIsPressed(true);
+          onPressIn?.(event);
+        }}
+        onPressOut={(event) => {
+          setIsPressed(false);
+          onPressOut?.(event);
+        }}
+        {...props}>
+        {loading ? (
+          <ActivityIndicator color={textColor} />
+        ) : (
+          <ThemedText style={[styles.label, { color: textColor }]}>{title}</ThemedText>
+        )}
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    position: 'relative',
+  },
+  shadowBacking: {
+    position: 'absolute',
+    top: SHADOW_OFFSET,
+    left: SHADOW_OFFSET,
+    right: -SHADOW_OFFSET,
+    bottom: -SHADOW_OFFSET,
+    borderRadius: BorderRadius.full,
+  },
   button: {
     paddingVertical: 17,
     paddingHorizontal: Spacing.four,
