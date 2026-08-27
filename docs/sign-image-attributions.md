@@ -1,10 +1,37 @@
 # Question image attributions
 
-**205 of the app's 714 questions now have `image_url` populated** (202
-distinct images). **All of them now come from the official DVSA source —
-the earlier Wikimedia-sourced images have been fully replaced.**
+**208 of the app's 714 questions now have `image_url` populated** (205
+distinct images), all sourced from the official DVSA image set (313
+files) supplied by the user. The earlier Wikimedia-sourced images have
+been fully replaced.
 
-## Official DVSA images — sole source
+## Note: a regression happened and was caught and fixed
+
+A background pass (launched to visually match images before the official
+question-bank spreadsheet was discovered) finished after the
+spreadsheet-driven matching was already done, and — working blind to the
+spreadsheet's existence — overwrote 55 already-correct, spreadsheet
+matched rows with its own less-certain visual guesses (last-write-wins on
+the same table). The pass caught and reported this itself. Fixed by
+re-running the deterministic spreadsheet matcher against exactly the 55
+affected rows and repointing them at their already-uploaded authoritative
+image (no re-upload needed — same file, just restoring the DB reference).
+Of the fork's 58 total updates, **3 had no spreadsheet match** (our
+question wording diverges too much from the official bank's for text
+matching) — these were individually viewed and verified correct by eye
+before being kept: a motorway red-cross-over-one-lane question, a bus
+pulling away from a stop, and an amber-traffic-light-alone question
+(verified this one specifically shows amber lit *alone*, not red+amber
+together — a different UK traffic-light stage that would have been a
+real factual error if mixed up).
+
+**Lesson for future passes**: when multiple agents/passes touch the same
+data source concurrently, the one working from a less authoritative
+method can silently clobber a better one if it finishes later — worth
+either sequencing dependent work or diffing against source-of-truth
+after any pass that runs in parallel with data-modifying work.
+
+## Official DVSA images — primary source
 
 The user supplied the real official DVSA Category B theory test image set
 (313 files, `C:\Users\rishi\OneDrive\Pictures\DVSA Images`, confirmed by
@@ -101,21 +128,19 @@ bucket.
 
 ## What's likely still missing
 
-The official spreadsheet's 758 questions include some images not yet
-matched to our bank (our bank has 714 questions total, generated
-independently, so not every official question has a corresponding one
-here, and vice versa some of our questions may be paraphrased differently
-enough that the word-overlap matcher missed a real match — anything below
-the 1.00/manually-verified bar was deliberately left alone rather than
-guessed). A background pass was also independently working through the
-same gap via visual inspection of the raw DVSA image files (slower, no
-index) in parallel with this spreadsheet-driven pass — check for its
-results too since it may have found additional matches for questions the
-spreadsheet approach didn't cover, particularly ones where our wording
-diverges more from the official bank.
+506 of 714 questions still have no image. The official spreadsheet's 758
+questions include some images not yet matched to our bank (our bank was
+generated independently, so not every official question has a
+corresponding one here, and vice versa some of our questions may be
+paraphrased differently enough that the word-overlap matcher missed a
+real match — anything below the 1.00/manually-verified bar was
+deliberately left alone rather than guessed). Many of the 506 genuinely
+don't need an image at all (pure knowledge/procedure questions like
+insurance or documents) — no attempt has been made yet to separate those
+from ones that do need an image but weren't matched.
 
 To extend coverage further: re-run the matching script with a lower
-threshold and manually review each candidate the way the 6 borderline
-ones above were reviewed (word-overlap alone is not safe below ~1.00, as
-shown by the 4 false positives caught this pass), or work from the
-official spreadsheet's remaining un-mapped rows directly.
+threshold and manually review each candidate the way the borderline ones
+in this document were reviewed (word-overlap alone is not safe below
+~1.00, as shown by the false positives caught along the way), or work
+from the official spreadsheet's remaining un-mapped rows directly.
