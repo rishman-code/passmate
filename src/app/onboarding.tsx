@@ -394,7 +394,10 @@ export default function OnboardingScreen() {
 
           {page.kind === 'welcome' ? (
             <Pressable
-              onPress={() => router.push('/auth/sign-in')}
+              onPress={async () => {
+                await markOnboardingComplete();
+                router.replace('/auth/sign-in');
+              }}
               hitSlop={12}
               style={styles.haveAccountPressable}
               testID="onboarding-have-account-link">
