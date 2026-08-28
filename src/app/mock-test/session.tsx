@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -74,6 +74,20 @@ export default function MockTestSessionScreen() {
     finishTest();
   };
 
+  const handleQuit = () => {
+    Alert.alert('Quit mock test?', 'Your progress on this test will be lost.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Quit',
+        style: 'destructive',
+        onPress: () => {
+          useMockTestStore.getState().reset();
+          router.replace('/(tabs)');
+        },
+      },
+    ]);
+  };
+
   if (!question) {
     return (
       <ThemedView style={styles.centered}>
@@ -89,13 +103,18 @@ export default function MockTestSessionScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <View style={[styles.topBar, { paddingTop: insets.top + Spacing.two }]}>
-          <Pressable onPress={previousQuestion} disabled={currentIndex === 0} hitSlop={12}>
-            <Ionicons
-              name="chevron-back"
-              size={28}
-              color={currentIndex === 0 ? theme.textSecondary : theme.text}
-            />
-          </Pressable>
+          <View style={styles.topBarLeft}>
+            <Pressable onPress={handleQuit} hitSlop={12} testID="mock-test-session-quit-button">
+              <Ionicons name="close" size={26} color={theme.text} />
+            </Pressable>
+            <Pressable onPress={previousQuestion} disabled={currentIndex === 0} hitSlop={12}>
+              <Ionicons
+                name="chevron-back"
+                size={28}
+                color={currentIndex === 0 ? theme.textSecondary : theme.text}
+              />
+            </Pressable>
+          </View>
           <Timer seconds={timeRemaining} />
           <View style={styles.topBarRight}>
             <Pressable
@@ -181,6 +200,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
+  },
+  topBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
   },
   topBarRight: {
     flexDirection: 'row',
