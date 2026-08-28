@@ -8,7 +8,7 @@
     "scheme": "greenlight",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.greenlight.app",
+      "bundleIdentifier": "com.greenlightapp.ios",
       "icon": "./assets/images/icon.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -17,7 +17,7 @@
       "usesAppleSignIn": true
     },
     "android": {
-      "package": "com.greenlight.app",
+      "package": "com.greenlightapp.android",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
