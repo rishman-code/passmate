@@ -4,7 +4,7 @@ import FALLBACK_BANK_HOLIDAYS from '@/data/bank-holidays-fallback.json';
 import type { LocalDate } from '@/types/journey';
 
 const ENDPOINT = 'https://www.gov.uk/bank-holidays.json';
-const CACHE_KEY = 'passmate-bank-holidays-cache';
+const CACHE_KEY = 'greenlight-bank-holidays-cache';
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type BankHolidayDivision = 'england-and-wales' | 'scotland' | 'northern-ireland';

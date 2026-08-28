@@ -1,4 +1,4 @@
--- PassMate: Add user auth to progress tables
+-- GreenLight: Add user auth to progress tables
 -- Run this in the Supabase SQL editor (Dashboard → SQL Editor → New query)
 -- Safe to run once — uses IF NOT EXISTS / IF EXISTS guards throughout.
 

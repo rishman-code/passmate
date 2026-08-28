@@ -1,13 +1,13 @@
-# PassMate — Claude Code Project Brief
+# GreenLight — Claude Code Project Brief
 
-This file is the single source of truth for Claude Code working on PassMate.
+This file is the single source of truth for Claude Code working on GreenLight.
 Read this fully before making any changes to any file.
 
 ---
 
-## What PassMate Is
+## What GreenLight Is
 
-PassMate is an AI-powered UK driving theory test revision app for iOS, built with
+GreenLight is an AI-powered UK driving theory test revision app for iOS, built with
 React Native and Expo. It helps learners pass their DVSA driving theory test through:
 
 - Adaptive practice questions (weak categories shown more often)
@@ -312,7 +312,7 @@ Tracked in `progress-store.ts`:
 ### Paywall
 - Trigger: when free user attempts question 21+ in a day
 - Daily count resets at midnight
-- Product ID: `passmate_lifetime`
+- Product ID: `greenlight_lifetime`
 - Entitlement ID: `premium`
 - Price: £5.99 one-time purchase
 - When RevenueCat key is placeholder: auto-unlock premium (dev mode)

@@ -87,7 +87,7 @@ export default function SignInScreen() {
             showsVerticalScrollIndicator={false}>
             <View style={styles.header}>
               <ThemedText type="title">Welcome back</ThemedText>
-              <ThemedText themeColor="textSecondary">Sign in to your PassMate account.</ThemedText>
+              <ThemedText themeColor="textSecondary">Sign in to your GreenLight account.</ThemedText>
             </View>
 
             {Platform.OS === 'ios' ? (

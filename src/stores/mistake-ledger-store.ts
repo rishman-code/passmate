@@ -34,7 +34,7 @@ export const useMistakeLedgerStore = create<MistakeLedgerState>()(
       reset: () => set({ flaggedIds: {} }),
     }),
     {
-      name: 'passmate-mistake-ledger',
+      name: 'greenlight-mistake-ledger',
       storage: createJSONStorage(() => AsyncStorage),
     },
   ),

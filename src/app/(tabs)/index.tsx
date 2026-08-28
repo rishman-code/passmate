@@ -123,7 +123,7 @@ export default function HomeScreen() {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <ThemedText type="title" style={{ color: theme.text }}>
-              PassMate
+              GreenLight
             </ThemedText>
             <ThemedText themeColor="textSecondary">
               Your AI-powered DVSA theory test companion

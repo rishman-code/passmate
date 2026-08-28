@@ -1,4 +1,4 @@
--- PassMate: Add self-reported weak topics, captured during onboarding
+-- GreenLight: Add self-reported weak topics, captured during onboarding
 -- Run this in the Supabase SQL editor (Dashboard → SQL Editor → New query)
 -- Safe to run once — uses IF NOT EXISTS guard.
 

@@ -1,4 +1,4 @@
-# PassMate — DVSA Theory Test Prep App
+# GreenLight (formerly PassMate) — DVSA Theory Test Prep App
 
 ## Original ask
 User connected an existing GitHub repo and asked to review how much of it is a working app, then show a preview (session 1). Session 2: fix the Home quick-action bug found in review, and decide on the AI-explanation architecture (cost/backend question).

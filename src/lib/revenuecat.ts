@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 
-export const PRO_ENTITLEMENT_ID = 'PassMate Pro';
+export const PRO_ENTITLEMENT_ID = 'GreenLight Pro';
 export const LIFETIME_PRODUCT_ID = 'lifetime';
 
 const iosKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '';

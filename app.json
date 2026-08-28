@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "PassMate",
-    "slug": "PassMate",
+    "name": "GreenLight",
+    "slug": "GreenLight",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "passmate",
+    "scheme": "greenlight",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.passmate.app",
+      "bundleIdentifier": "com.greenlight.app",
       "icon": "./assets/images/icon.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -17,7 +17,7 @@
       "usesAppleSignIn": true
     },
     "android": {
-      "package": "com.passmate.app",
+      "package": "com.greenlight.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

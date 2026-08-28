@@ -130,7 +130,7 @@ export default function ProfileScreen() {
               ]}>
               <Ionicons name="checkmark-circle" size={24} color={theme.success} />
               <ThemedText style={[styles.premiumText, { color: theme.success }]}>
-                You have full access to all PassMate features.
+                You have full access to all GreenLight features.
               </ThemedText>
             </View>
           )}
@@ -212,7 +212,7 @@ export default function ProfileScreen() {
 
           <View style={[styles.info, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
             <ThemedText type="small" themeColor="textSecondary">
-              PassMate helps you prepare for the official DVSA driving theory test. This app is not
+              GreenLight helps you prepare for the official DVSA driving theory test. This app is not
               affiliated with or endorsed by the DVSA.
             </ThemedText>
           </View>
