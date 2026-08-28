@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,13 +46,11 @@ export default function WelcomeScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.avatarRow}>
-            <View
-              style={[
-                styles.avatar,
-                { backgroundColor: theme.primary, borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 4) },
-              ]}>
-              <Ionicons name="school-outline" size={44} color="#FFFFFF" />
-            </View>
+            <Image
+              source={require('@/assets/images/welcome-mascot.png')}
+              style={[styles.avatar, tactileShadow(theme.borderHard, 4)]}
+              contentFit="contain"
+            />
           </View>
 
           <ThemedText type="title" style={styles.title}>
@@ -105,9 +104,6 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: BorderRadius.full,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   title: { textAlign: 'center' },
   subtitle: { textAlign: 'center', marginBottom: Spacing.two },
