@@ -142,9 +142,9 @@ export default function MockTestSessionScreen() {
           </ThemedText>
           <View style={styles.footerButtons}>
             {currentIndex < questions.length - 1 ? (
-              <Button title="Next" onPress={nextQuestion} style={styles.footerBtn} />
+              <Button title="Next" onPress={nextQuestion} disabled={!selectedAnswer} style={styles.footerBtn} />
             ) : (
-              <Button title="Submit Test" onPress={handleSubmit} style={styles.footerBtn} />
+              <Button title="Submit Test" onPress={handleSubmit} disabled={!selectedAnswer} style={styles.footerBtn} />
             )}
           </View>
         </View>
