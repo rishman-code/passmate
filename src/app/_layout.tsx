@@ -129,9 +129,9 @@ export default function RootLayout() {
         />
         <Stack.Screen name="mistake-ledger" options={{ headerShown: true, title: 'Mistake Ledger' }} />
       </Stack>
-      {!session && guestChecked && !isGuest && <Redirect href="/auth/sign-in" />}
-      {(session || isGuest) && onboardingChecked && needsOnboarding && (
-        <Redirect href="/onboarding" />
+      {onboardingChecked && needsOnboarding && <Redirect href="/onboarding" />}
+      {onboardingChecked && !needsOnboarding && !session && guestChecked && !isGuest && (
+        <Redirect href="/auth/sign-in" />
       )}
     </ThemeProvider>
   );

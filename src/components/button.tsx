@@ -42,7 +42,11 @@ export function Button({
   const theme = useTheme();
   const isDisabled = disabled || loading;
   const [isPressed, setIsPressed] = useState(false);
-  const showShadow = !(isPressed && !isDisabled);
+  // A disabled button must never carry the tactile shadow: on web it's an inline
+  // boxShadow on the same element as `opacity`, so CSS composites them together --
+  // fading the shadow into a translucent, offset ghost instead of just dimming the
+  // button.
+  const showShadow = !isDisabled && !isPressed;
 
   const backgroundColor =
     variant === 'primary'
