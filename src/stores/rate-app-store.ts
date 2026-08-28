@@ -38,7 +38,7 @@ export const useRateAppStore = create<RateAppState>()(
       },
     }),
     {
-      name: 'passmate-rate-app',
+      name: 'greenlight-rate-app',
       storage: createJSONStorage(() => AsyncStorage),
     },
   ),

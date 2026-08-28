@@ -63,7 +63,7 @@ export default function PaywallScreen() {
               <Ionicons name="close" size={22} color="#0A0A0B" />
             </Pressable>
             <Ionicons name="sparkles" size={40} color="#FFFFFF" />
-            <ThemedText style={styles.heroTitle}>PassMate Pro</ThemedText>
+            <ThemedText style={styles.heroTitle}>GreenLight Pro</ThemedText>
             <ThemedText style={styles.heroPrice}>{PREMIUM_PRICE} — lifetime access</ThemedText>
           </View>
 

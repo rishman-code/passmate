@@ -1,6 +1,6 @@
 import type { CustomerInfo } from 'react-native-purchases';
 
-export const PRO_ENTITLEMENT_ID = 'PassMate Pro';
+export const PRO_ENTITLEMENT_ID = 'GreenLight Pro';
 export const LIFETIME_PRODUCT_ID = 'lifetime';
 
 // react-native-purchases-ui (paywalls/customer center) has no web support yet,

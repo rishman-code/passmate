@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AIExplanation } from '@/components/ai-explanation';
 import { Button } from '@/components/button';
@@ -24,6 +24,7 @@ const OPTIONS: AnswerOption[] = ['a', 'b', 'c', 'd'];
 
 export default function PracticeSessionScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const isPremium = useSubscriptionStore((s) => s.isPremium);
   const recordAnswer = useProgressStore((s) => s.recordAnswer);
   const toggleFlag = useMistakeLedgerStore((s) => s.toggleFlag);
@@ -86,8 +87,8 @@ export default function PracticeSessionScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.topBar}>
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <View style={[styles.topBar, { paddingTop: insets.top + Spacing.two }]}>
           <Pressable onPress={() => router.back()} hitSlop={12} testID="practice-session-close-button">
             <Ionicons name="close" size={28} color={theme.text} />
           </Pressable>

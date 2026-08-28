@@ -92,7 +92,7 @@ export default function MockTestIntroScreen() {
 
           {!isPremium ? (
             <ThemedText type="small" themeColor="textSecondary" style={styles.premiumNote}>
-              Mock tests require PassMate Premium.
+              Mock tests require GreenLight Premium.
             </ThemedText>
           ) : null}
 

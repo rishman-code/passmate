@@ -1,4 +1,4 @@
--- PassMate: Lock down ai_explanation_cache
+-- GreenLight: Lock down ai_explanation_cache
 -- Authenticated users can read cached explanations.
 -- Writes come only from the ai-explanation Edge Function (service role key),
 -- which bypasses RLS entirely — so no write policy is needed.

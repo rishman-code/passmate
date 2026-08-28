@@ -1,4 +1,4 @@
--- PassMate: Add journey layer (test date, retake, certificate tracking)
+-- GreenLight: Add journey layer (test date, retake, certificate tracking)
 -- Run this in the Supabase SQL editor (Dashboard → SQL Editor → New query)
 -- Safe to run once — uses IF NOT EXISTS / IF EXISTS guards throughout.
 

@@ -1,5 +1,5 @@
 /**
- * Generates the PassMate app icon as a 1024x1024 PNG.
+ * Generates the GreenLight app icon as a 1024x1024 PNG.
  * Uses Playwright to render HTML with the Ionicons font (base64-embedded).
  *
  * Output: assets/images/icon.png  (replaces Expo starter template)

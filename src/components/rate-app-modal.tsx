@@ -25,10 +25,10 @@ export function RateAppModal({ visible, onNever, onLater, onRateNow }: RateAppMo
           ]}
           testID="rate-app-modal">
           <ThemedText type="h3" style={styles.title}>
-            Enjoying PassMate?
+            Enjoying GreenLight?
           </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.body}>
-            If PassMate's helping you get ready for your theory test, a quick rating helps other
+            If GreenLight's helping you get ready for your theory test, a quick rating helps other
             learners find it. It won't take a minute.
           </ThemedText>
 

@@ -1,4 +1,4 @@
--- PassMate Supabase schema
+-- GreenLight Supabase schema
 
 create table if not exists questions (
   id text primary key,

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { OptionButton } from '@/components/option-button';
@@ -22,6 +22,7 @@ const OPTIONS: AnswerOption[] = ['a', 'b', 'c', 'd'];
 
 export default function MockTestSessionScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const {
@@ -86,8 +87,8 @@ export default function MockTestSessionScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.topBar}>
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <View style={[styles.topBar, { paddingTop: insets.top + Spacing.two }]}>
           <Pressable onPress={previousQuestion} disabled={currentIndex === 0} hitSlop={12}>
             <Ionicons
               name="chevron-back"
@@ -149,9 +150,9 @@ export default function MockTestSessionScreen() {
               testID="mock-test-session-previous-button"
             />
             {currentIndex < questions.length - 1 ? (
-              <Button title="Next" onPress={nextQuestion} style={styles.footerBtn} />
+              <Button title="Next" onPress={nextQuestion} disabled={!selectedAnswer} style={styles.footerBtn} />
             ) : (
-              <Button title="Submit Test" onPress={handleSubmit} style={styles.footerBtn} />
+              <Button title="Submit Test" onPress={handleSubmit} disabled={!selectedAnswer} style={styles.footerBtn} />
             )}
           </View>
         </View>

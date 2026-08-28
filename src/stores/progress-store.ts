@@ -136,7 +136,7 @@ export const useProgressStore = create<ProgressState>()(
       reset: () => set({ userId: null, progress: {}, mockTestResults: [], currentStreak: 0, longestStreak: 0, lastActiveDate: null }),
     }),
     {
-      name: 'passmate-progress',
+      name: 'greenlight-progress',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         progress: state.progress,

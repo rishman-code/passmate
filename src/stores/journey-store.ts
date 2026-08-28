@@ -107,7 +107,7 @@ export const useJourneyStore = create<JourneyStoreState>()(
       reset: () => set({ userId: null, journey: defaultJourney(), hasSeenPrompt: false }),
     }),
     {
-      name: 'passmate-journey',
+      name: 'greenlight-journey',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         journey: state.journey,
