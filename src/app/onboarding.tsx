@@ -27,25 +27,9 @@ interface IntroSlide {
   body: string;
 }
 
-type Page =
-  | { kind: 'welcome' }
-  | { kind: 'intro'; slide: IntroSlide }
-  | { kind: 'journey' }
-  | { kind: 'weak-topics' }
-  | { kind: 'plan' };
+type Page = { kind: 'intro'; slide: IntroSlide } | { kind: 'journey' } | { kind: 'weak-topics' } | { kind: 'plan' };
 
 const HERO_IMAGE = 'https://images.pexels.com/photos/96106/pexels-photo-96106.jpeg';
-
-interface WelcomeFeature {
-  icon: IoniconName;
-  text: string;
-}
-
-const WELCOME_FEATURES: WelcomeFeature[] = [
-  { icon: 'checkmark-circle-outline', text: 'THE app you use to pass THIS time around' },
-  { icon: 'locate-outline', text: 'Learns your weak spots and only drills those, nothing else' },
-  { icon: 'gift-outline', text: 'Free trial unlocks everything, no limited version' },
-];
 
 const INTRO_SLIDES: IntroSlide[] = [
   {
@@ -82,7 +66,7 @@ export default function OnboardingScreen() {
   const maxTestDate = addYears(today, 1);
 
   const pages = useMemo<Page[]>(() => {
-    const intro: Page[] = [{ kind: 'welcome' }, ...INTRO_SLIDES.map((slide) => ({ kind: 'intro' as const, slide }))];
+    const intro: Page[] = INTRO_SLIDES.map((slide) => ({ kind: 'intro', slide }));
     if (selectedState === 'retake' || selectedState === 'certified') {
       return [...intro, { kind: 'journey' }];
     }
@@ -193,43 +177,6 @@ export default function OnboardingScreen() {
           </>
         ) : (
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-            {page.kind === 'welcome' ? (
-              <View style={styles.welcomeContent} testID="onboarding-welcome-step">
-                <View style={styles.welcomeAvatarRow}>
-                  <View
-                    style={[
-                      styles.welcomeAvatar,
-                      { backgroundColor: theme.primary, borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 4) },
-                    ]}>
-                    <Ionicons name="school-outline" size={44} color="#FFFFFF" />
-                  </View>
-                </View>
-
-                <ThemedText type="title" style={styles.welcomeTitle}>
-                  Welcome to GreenLight
-                </ThemedText>
-                <ThemedText themeColor="textSecondary" style={styles.welcomeSubtitle}>
-                  Your theory test coach
-                </ThemedText>
-
-                <View style={styles.welcomeFeatures}>
-                  {WELCOME_FEATURES.map((feature) => (
-                    <View
-                      key={feature.text}
-                      style={[
-                        styles.welcomeFeatureCard,
-                        { backgroundColor: theme.card, borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 3) },
-                      ]}>
-                      <View style={[styles.welcomeFeatureIcon, { backgroundColor: theme.backgroundElement }]}>
-                        <Ionicons name={feature.icon} size={20} color={theme.primary} />
-                      </View>
-                      <ThemedText style={styles.welcomeFeatureText}>{feature.text}</ThemedText>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            ) : null}
-
             {page.kind === 'journey' ? (
               <View style={styles.stepContent} testID="onboarding-journey-step">
                 <ThemedText type="title">When's your test?</ThemedText>
@@ -371,41 +318,23 @@ export default function OnboardingScreen() {
         <View style={styles.footer}>
           {isIntro ? (
             <View style={styles.dots}>
-              {INTRO_SLIDES.map((_, i) => {
-                const pageIndex = i + 1; // page 0 is the welcome slide
-                return (
-                  <Pressable key={i} onPress={() => setCurrentIndex(pageIndex)} testID={`onboarding-dot-${i}`}>
-                    <View
-                      style={[
-                        styles.dot,
-                        {
-                          backgroundColor: pageIndex === currentIndex ? theme.primary : theme.border,
-                          width: pageIndex === currentIndex ? 28 : 8,
-                        },
-                      ]}
-                    />
-                  </Pressable>
-                );
-              })}
+              {INTRO_SLIDES.map((_, i) => (
+                <Pressable key={i} onPress={() => setCurrentIndex(i)} testID={`onboarding-dot-${i}`}>
+                  <View
+                    style={[
+                      styles.dot,
+                      {
+                        backgroundColor: i === currentIndex ? theme.primary : theme.border,
+                        width: i === currentIndex ? 28 : 8,
+                      },
+                    ]}
+                  />
+                </Pressable>
+              ))}
             </View>
           ) : null}
 
           <Button title={nextTitle} onPress={handleNext} disabled={!canProceed} fullWidth testID="onboarding-next-button" />
-
-          {page.kind === 'welcome' ? (
-            <Pressable
-              onPress={async () => {
-                await markOnboardingComplete();
-                router.replace('/auth/sign-in');
-              }}
-              hitSlop={12}
-              style={styles.haveAccountPressable}
-              testID="onboarding-have-account-link">
-              <ThemedText type="small" style={styles.haveAccountText}>
-                I have an account
-              </ThemedText>
-            </Pressable>
-          ) : null}
         </View>
       </SafeAreaView>
     </View>
@@ -469,36 +398,4 @@ const styles = StyleSheet.create({
   footer: { padding: Spacing.four, paddingTop: Spacing.four, gap: Spacing.three },
   dots: { flexDirection: 'row', gap: Spacing.one, alignItems: 'center' },
   dot: { height: 8, borderRadius: BorderRadius.full },
-  welcomeContent: { gap: Spacing.three, alignItems: 'center' },
-  welcomeAvatarRow: { alignItems: 'center', marginBottom: Spacing.one },
-  welcomeAvatar: {
-    width: 96,
-    height: 96,
-    borderRadius: BorderRadius.full,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  welcomeTitle: { textAlign: 'center' },
-  welcomeSubtitle: { textAlign: 'center', marginBottom: Spacing.two },
-  welcomeFeatures: { width: '100%', gap: Spacing.three },
-  welcomeFeatureCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 2,
-  },
-  welcomeFeatureIcon: {
-    width: 42,
-    height: 42,
-    minWidth: 42,
-    borderRadius: BorderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  welcomeFeatureText: { flex: 1, fontSize: 14.5, lineHeight: 20, fontFamily: Fonts.bodyBold },
-  haveAccountPressable: { alignItems: 'center', paddingTop: Spacing.one },
-  haveAccountText: { textDecorationLine: 'underline' },
 });

@@ -26,6 +26,7 @@ import { isGuestMode } from '@/lib/guest-mode';
 import { hasSeenOnboarding } from '@/lib/onboarding';
 import { useAuthStore } from '@/stores/auth-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
+import { useWelcomeSessionStore } from '@/stores/welcome-session-store';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -33,6 +34,7 @@ export default function RootLayout() {
   const initializeAuth = useAuthStore((s) => s.initialize);
   const authLoading = useAuthStore((s) => s.isLoading);
   const session = useAuthStore((s) => s.session);
+  const hasSeenWelcome = useWelcomeSessionStore((s) => s.hasSeenWelcome);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [guestChecked, setGuestChecked] = useState(false);
@@ -98,6 +100,7 @@ export default function RootLayout() {
         },
       }}>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="welcome" options={{ animation: 'none', gestureEnabled: false }} />
         <Stack.Screen name="auth" />
         <Stack.Screen name="onboarding" options={{ animation: 'none', gestureEnabled: false }} />
         <Stack.Screen name="(tabs)" />
@@ -129,8 +132,9 @@ export default function RootLayout() {
         />
         <Stack.Screen name="mistake-ledger" options={{ headerShown: true, title: 'Mistake Ledger' }} />
       </Stack>
-      {onboardingChecked && needsOnboarding && <Redirect href="/onboarding" />}
-      {onboardingChecked && !needsOnboarding && !session && guestChecked && !isGuest && (
+      {!hasSeenWelcome && <Redirect href="/welcome" />}
+      {hasSeenWelcome && onboardingChecked && needsOnboarding && <Redirect href="/onboarding" />}
+      {hasSeenWelcome && onboardingChecked && !needsOnboarding && !session && guestChecked && !isGuest && (
         <Redirect href="/auth/sign-in" />
       )}
     </ThemeProvider>
