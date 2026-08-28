@@ -16,7 +16,7 @@ import {
   PlusJakartaSans_700Bold,
   useFonts as usePlusJakartaFonts,
 } from '@expo-google-fonts/plus-jakarta-sans';
-import { DarkTheme, DefaultTheme, Redirect, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Redirect, Stack, ThemeProvider, useRootNavigationState } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
@@ -35,6 +35,12 @@ export default function RootLayout() {
   const authLoading = useAuthStore((s) => s.isLoading);
   const session = useAuthStore((s) => s.session);
   const hasSeenWelcome = useWelcomeSessionStore((s) => s.hasSeenWelcome);
+  // A <Redirect> rendered before the native navigator has finished its first
+  // mount can be silently dropped (no-op) instead of queued -- this doesn't
+  // reproduce on web, where the browser's own history/URL state backs it up.
+  // Gate every redirect below on the root navigation state actually existing.
+  const rootNavigationState = useRootNavigationState();
+  const navigationReady = rootNavigationState?.key != null;
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [guestChecked, setGuestChecked] = useState(false);
@@ -132,11 +138,17 @@ export default function RootLayout() {
         />
         <Stack.Screen name="mistake-ledger" options={{ headerShown: true, title: 'Mistake Ledger' }} />
       </Stack>
-      {!hasSeenWelcome && <Redirect href="/welcome" />}
-      {hasSeenWelcome && onboardingChecked && needsOnboarding && <Redirect href="/onboarding" />}
-      {hasSeenWelcome && onboardingChecked && !needsOnboarding && !session && guestChecked && !isGuest && (
-        <Redirect href="/auth/sign-in" />
+      {navigationReady && !hasSeenWelcome && <Redirect href="/welcome" />}
+      {navigationReady && hasSeenWelcome && onboardingChecked && needsOnboarding && (
+        <Redirect href="/onboarding" />
       )}
+      {navigationReady &&
+        hasSeenWelcome &&
+        onboardingChecked &&
+        !needsOnboarding &&
+        !session &&
+        guestChecked &&
+        !isGuest && <Redirect href="/auth/sign-in" />}
     </ThemeProvider>
   );
 }
