@@ -133,7 +133,7 @@ export default function RootLayout() {
         <Stack.Screen name="welcome" options={{ animation: 'none', gestureEnabled: false }} />
         <Stack.Screen name="auth" />
         <Stack.Screen name="onboarding" options={{ animation: 'none', gestureEnabled: false }} />
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(tabs)" options={{ title: 'Home' }} />
         <Stack.Screen
           name="practice/session"
           options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
