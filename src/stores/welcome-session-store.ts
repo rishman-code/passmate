@@ -7,9 +7,11 @@ import { create } from 'zustand';
 interface WelcomeSessionState {
   hasSeenWelcome: boolean;
   markWelcomeSeen: () => void;
+  resetWelcomeSeen: () => void;
 }
 
 export const useWelcomeSessionStore = create<WelcomeSessionState>((set) => ({
   hasSeenWelcome: false,
   markWelcomeSeen: () => set({ hasSeenWelcome: true }),
+  resetWelcomeSeen: () => set({ hasSeenWelcome: false }),
 }));

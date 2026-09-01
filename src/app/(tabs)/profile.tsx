@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -10,11 +10,14 @@ import { PREMIUM_PRICE } from '@/constants/categories';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { signOut } from '@/lib/auth';
+import { setGuestMode } from '@/lib/guest-mode';
+import { resetOnboardingSeen } from '@/lib/onboarding';
 import { useAuthStore } from '@/stores/auth-store';
 import { useJourneyStore } from '@/stores/journey-store';
 import { useMistakeLedgerStore } from '@/stores/mistake-ledger-store';
 import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
+import { useWelcomeSessionStore } from '@/stores/welcome-session-store';
 import type { JourneyState } from '@/types/journey';
 import { formatLocalDateLong } from '@/utils/journey-dates';
 
@@ -40,6 +43,7 @@ export default function ProfileScreen() {
   const journey = useJourneyStore((s) => s.journey);
   const resetJourney = useJourneyStore((s) => s.reset);
   const resetMistakeLedger = useMistakeLedgerStore((s) => s.reset);
+  const resetWelcomeSeen = useWelcomeSessionStore((s) => s.resetWelcomeSeen);
 
   const displayName = user ? ((user.user_metadata?.name as string | undefined) ?? user.email ?? 'Account') : 'Guest';
 
@@ -63,6 +67,34 @@ export default function ProfileScreen() {
     resetJourney();
     resetMistakeLedger();
     router.replace('/auth/sign-in');
+  };
+
+  // Hidden test-only escape hatch (long-press the footer disclaimer) to replay
+  // the first-time welcome/onboarding flow without uninstalling the app --
+  // onboarding-seen and guest mode are both persisted per-device, so once
+  // either is set they otherwise never reset on their own.
+  const handleResetOnboarding = () => {
+    Alert.alert(
+      'Reset onboarding?',
+      'This signs you out and shows the welcome and onboarding screens again next time, as if this were a fresh install.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            await signOut();
+            await setGuestMode(false);
+            await resetOnboardingSeen();
+            resetProgress();
+            resetJourney();
+            resetMistakeLedger();
+            resetWelcomeSeen();
+            router.replace('/welcome');
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -211,12 +243,16 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          <View style={[styles.info, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+          <Pressable
+            onLongPress={handleResetOnboarding}
+            delayLongPress={2000}
+            style={[styles.info, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+            testID="profile-footer-reset-onboarding">
             <ThemedText type="small" themeColor="textSecondary">
               GreenLight helps you prepare for the official DVSA driving theory test. This app is not
               affiliated with or endorsed by the DVSA.
             </ThemedText>
-          </View>
+          </Pressable>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

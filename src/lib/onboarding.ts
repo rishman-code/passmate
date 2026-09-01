@@ -18,3 +18,11 @@ export async function markOnboardingComplete(): Promise<void> {
   }
   await SecureStore.setItemAsync(ONBOARDING_KEY, 'true');
 }
+
+export async function resetOnboardingSeen(): Promise<void> {
+  if (Platform.OS === 'web') {
+    localStorage.removeItem(ONBOARDING_KEY);
+    return;
+  }
+  await SecureStore.deleteItemAsync(ONBOARDING_KEY);
+}
