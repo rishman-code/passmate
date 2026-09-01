@@ -138,12 +138,18 @@ export default function RootLayout() {
           name="practice/session"
           options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
         />
-        <Stack.Screen name="mock-test/index" options={{ headerShown: true, title: 'Mock Test' }} />
+        <Stack.Screen
+          name="mock-test/index"
+          options={{ headerShown: true, title: 'Mock Test', headerBackTitle: 'Home' }}
+        />
         <Stack.Screen
           name="mock-test/session"
           options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
         />
-        <Stack.Screen name="mock-test/results" options={{ headerShown: true, title: 'Results' }} />
+        <Stack.Screen
+          name="mock-test/results"
+          options={{ headerShown: true, title: 'Results', headerBackTitle: 'Home' }}
+        />
         <Stack.Screen
           name="paywall"
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
@@ -160,7 +166,10 @@ export default function RootLayout() {
           name="journey/certificate"
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
-        <Stack.Screen name="mistake-ledger" options={{ headerShown: true, title: 'Mistake Ledger' }} />
+        <Stack.Screen
+          name="mistake-ledger"
+          options={{ headerShown: true, title: 'Mistake Ledger', headerBackTitle: 'Progress' }}
+        />
       </Stack>
       {navigationReady && !hasSeenWelcome && !isResettingPassword && <Redirect href="/welcome" />}
       {navigationReady && hasSeenWelcome && onboardingChecked && needsOnboarding && !isResettingPassword && (
