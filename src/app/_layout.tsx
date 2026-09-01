@@ -16,7 +16,15 @@ import {
   PlusJakartaSans_700Bold,
   useFonts as usePlusJakartaFonts,
 } from '@expo-google-fonts/plus-jakarta-sans';
-import { DarkTheme, DefaultTheme, Redirect, Stack, ThemeProvider, useRootNavigationState } from 'expo-router';
+import {
+  DarkTheme,
+  DefaultTheme,
+  Redirect,
+  Stack,
+  ThemeProvider,
+  usePathname,
+  useRootNavigationState,
+} from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
@@ -42,6 +50,17 @@ export default function RootLayout() {
   // Gate every redirect below on the root navigation state actually existing.
   const rootNavigationState = useRootNavigationState();
   const navigationReady = rootNavigationState?.key != null;
+  // This screen drives its own navigation start to finish -- deep-linked in
+  // (cold launch, so hasSeenWelcome is always false) from the reset-password
+  // email, then exchanging its one-time code for a session (so `session`
+  // below briefly flips from null to set), then its own explicit redirect
+  // once the user has actually set a new password. Every blanket redirect
+  // below would otherwise hijack it mid-flow -- to welcome the instant it
+  // mounts (replacing this route and losing the one-time code before it's
+  // even exchanged), then to sign-in (no session yet), then to tabs the
+  // instant the exchange succeeds (session now set) -- in every case before
+  // the user ever sees the "set a new password" form.
+  const isResettingPassword = usePathname() === '/auth/reset-password';
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [guestChecked, setGuestChecked] = useState(false);
@@ -143,8 +162,8 @@ export default function RootLayout() {
         />
         <Stack.Screen name="mistake-ledger" options={{ headerShown: true, title: 'Mistake Ledger' }} />
       </Stack>
-      {navigationReady && !hasSeenWelcome && <Redirect href="/welcome" />}
-      {navigationReady && hasSeenWelcome && onboardingChecked && needsOnboarding && (
+      {navigationReady && !hasSeenWelcome && !isResettingPassword && <Redirect href="/welcome" />}
+      {navigationReady && hasSeenWelcome && onboardingChecked && needsOnboarding && !isResettingPassword && (
         <Redirect href="/onboarding" />
       )}
       {navigationReady &&
@@ -153,13 +172,15 @@ export default function RootLayout() {
         !needsOnboarding &&
         !session &&
         guestChecked &&
-        !isGuest && <Redirect href="/auth/sign-in" />}
+        !isGuest &&
+        !isResettingPassword && <Redirect href="/auth/sign-in" />}
       {navigationReady &&
         hasSeenWelcome &&
         onboardingChecked &&
         !needsOnboarding &&
         guestChecked &&
-        (session || isGuest) && <Redirect href="/(tabs)" />}
+        (session || isGuest) &&
+        !isResettingPassword && <Redirect href="/(tabs)" />}
     </ThemeProvider>
   );
 }
