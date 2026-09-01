@@ -42,4 +42,5 @@ export const CATEGORY_ICONS: Record<DVSACategory, IoniconName> = {
 export const MOCK_TEST_QUESTION_COUNT = 50;
 export const MOCK_TEST_DURATION_SECONDS = 57 * 60;
 export const MOCK_TEST_PASS_SCORE = 43;
-export const PREMIUM_PRICE = '£5.99';
+export const MONTHLY_PRICE = '£4.99';
+export const YEARLY_PRICE = '£49.99';

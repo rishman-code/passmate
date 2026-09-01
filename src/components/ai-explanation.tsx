@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { MONTHLY_PRICE } from '@/constants/categories';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ThemedText } from '@/components/themed-text';
@@ -33,7 +34,7 @@ export function AIExplanation({
           </ThemedText>
           {onUnlock ? (
             <ThemedText type="linkPrimary" style={{ color: theme.premium }} onPress={onUnlock}>
-              Unlock for £5.99
+              Unlock from {MONTHLY_PRICE}/mo
             </ThemedText>
           ) : null}
         </View>

@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { PREMIUM_PRICE } from '@/constants/categories';
+import { MONTHLY_PRICE, YEARLY_PRICE } from '@/constants/categories';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { deleteAccount, signOut } from '@/lib/auth';
@@ -168,7 +168,7 @@ export default function ProfileScreen() {
               ]}>
               <ThemedText type="h3">Upgrade to Premium</ThemedText>
               <ThemedText themeColor="textSecondary">
-                One-time purchase — {PREMIUM_PRICE}
+                {MONTHLY_PRICE}/month or {YEARLY_PRICE}/year
               </ThemedText>
               {FEATURES.map((feature) => (
                 <View key={feature.text} style={styles.featureRow}>
@@ -179,7 +179,7 @@ export default function ProfileScreen() {
                 </View>
               ))}
               <Button
-                title={`Unlock for ${PREMIUM_PRICE}`}
+                title="View Plans"
                 onPress={handleUnlockPress}
                 fullWidth
                 testID="profile-unlock-button"

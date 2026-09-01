@@ -2,17 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { PREMIUM_PRICE } from '@/constants/categories';
+import { MONTHLY_PRICE, YEARLY_PRICE } from '@/constants/categories';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
-import { isRevenueCatConfigured } from '@/lib/revenuecat';
+import { getSubscriptionPackages, isRevenueCatConfigured } from '@/lib/revenuecat';
 import { useTheme } from '@/hooks/use-theme';
-import { useSubscriptionStore } from '@/stores/subscription-store';
+import { useSubscriptionStore, type SubscriptionPlan } from '@/stores/subscription-store';
 
 const HERO_IMAGE = 'https://images.pexels.com/photos/96106/pexels-photo-96106.jpeg';
 
@@ -21,12 +22,25 @@ const FEATURES = [
   'Full 50-question mock test with 57-minute timer',
   'Detailed weak spot analysis across all 14 DVSA categories',
   'Unlimited adaptive practice sessions',
-  'One-time purchase — no subscription',
+  'Cancel anytime',
 ];
+
+// £49.99/yr works out to about £4.17/mo, vs £4.99/mo paid monthly.
+const YEARLY_SAVINGS_LABEL = 'Save 17%';
 
 export default function PaywallScreen() {
   const theme = useTheme();
   const { isLoading, error, purchase, restore, setPremium } = useSubscriptionStore();
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('yearly');
+  const [monthlyPriceLabel, setMonthlyPriceLabel] = useState(MONTHLY_PRICE);
+  const [yearlyPriceLabel, setYearlyPriceLabel] = useState(YEARLY_PRICE);
+
+  useEffect(() => {
+    getSubscriptionPackages().then(({ monthly, yearly }) => {
+      if (monthly?.product.priceString) setMonthlyPriceLabel(monthly.product.priceString);
+      if (yearly?.product.priceString) setYearlyPriceLabel(yearly.product.priceString);
+    });
+  }, []);
 
   const handlePurchase = async () => {
     if (!isRevenueCatConfigured) {
@@ -35,7 +49,7 @@ export default function PaywallScreen() {
       return;
     }
 
-    const success = await purchase();
+    const success = await purchase(selectedPlan);
     if (success) {
       router.back();
     }
@@ -64,7 +78,50 @@ export default function PaywallScreen() {
             </Pressable>
             <Ionicons name="sparkles" size={40} color="#FFFFFF" />
             <ThemedText style={styles.heroTitle}>GreenLight Pro</ThemedText>
-            <ThemedText style={styles.heroPrice}>{PREMIUM_PRICE} — lifetime access</ThemedText>
+            <ThemedText style={styles.heroPrice}>Full access to every feature</ThemedText>
+          </View>
+
+          <View style={styles.plans}>
+            <Pressable
+              onPress={() => setSelectedPlan('yearly')}
+              testID="paywall-plan-yearly"
+              style={[
+                styles.planCard,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: selectedPlan === 'yearly' ? theme.primary : theme.border,
+                  borderWidth: selectedPlan === 'yearly' ? 2.5 : 1.5,
+                },
+              ]}>
+              <View style={styles.planHeader}>
+                <ThemedText style={styles.planTitle}>Yearly</ThemedText>
+                <View style={[styles.savingsBadge, { backgroundColor: theme.successLight, borderColor: theme.success }]}>
+                  <ThemedText type="caption" style={{ color: theme.success }}>
+                    {YEARLY_SAVINGS_LABEL}
+                  </ThemedText>
+                </View>
+              </View>
+              <ThemedText type="small" themeColor="textSecondary">
+                {yearlyPriceLabel} per year
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setSelectedPlan('monthly')}
+              testID="paywall-plan-monthly"
+              style={[
+                styles.planCard,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: selectedPlan === 'monthly' ? theme.primary : theme.border,
+                  borderWidth: selectedPlan === 'monthly' ? 2.5 : 1.5,
+                },
+              ]}>
+              <ThemedText style={styles.planTitle}>Monthly</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {monthlyPriceLabel} per month
+              </ThemedText>
+            </Pressable>
           </View>
 
           <View style={styles.features}>
@@ -91,7 +148,7 @@ export default function PaywallScreen() {
 
         <View style={styles.footer}>
           <Button
-            title={`Get Premium — ${PREMIUM_PRICE}`}
+            title={`Get Premium — ${selectedPlan === 'yearly' ? yearlyPriceLabel + '/yr' : monthlyPriceLabel + '/mo'}`}
             onPress={handlePurchase}
             loading={isLoading}
             fullWidth
@@ -152,6 +209,29 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.92)',
     fontSize: 17,
     fontFamily: Fonts.bodySemiBold,
+  },
+  plans: {
+    gap: Spacing.two,
+  },
+  planCard: {
+    padding: Spacing.three,
+    borderRadius: BorderRadius.lg,
+    gap: 2,
+  },
+  planHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  planTitle: {
+    fontSize: 17,
+    fontFamily: Fonts.displaySemiBold,
+  },
+  savingsBadge: {
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
   },
   features: {
     gap: Spacing.three,

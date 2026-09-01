@@ -2,8 +2,9 @@ import { Platform } from 'react-native';
 import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 
-export const PRO_ENTITLEMENT_ID = 'GreenLight Pro';
-export const LIFETIME_PRODUCT_ID = 'lifetime';
+export const PRO_ENTITLEMENT_ID = 'greenlight_theory_test';
+export const MONTHLY_PRODUCT_ID = 'greenlight_monthly';
+export const YEARLY_PRODUCT_ID = 'greenlight_yearly';
 
 const iosKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '';
 const androidKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '';
@@ -49,9 +50,14 @@ export function hasProEntitlement(customerInfo: CustomerInfo | null): boolean {
   return customerInfo.entitlements.active[PRO_ENTITLEMENT_ID] !== undefined;
 }
 
-export async function getLifetimePackage(): Promise<PurchasesPackage | null> {
+export interface SubscriptionPackages {
+  monthly: PurchasesPackage | null;
+  yearly: PurchasesPackage | null;
+}
+
+export async function getSubscriptionPackages(): Promise<SubscriptionPackages> {
   if (!isRevenueCatConfigured) {
-    return null;
+    return { monthly: null, yearly: null };
   }
 
   await initializeRevenueCat();
@@ -61,29 +67,29 @@ export async function getLifetimePackage(): Promise<PurchasesPackage | null> {
     const current = offerings.current;
 
     if (!current) {
-      return null;
+      return { monthly: null, yearly: null };
     }
 
-    return (
-      current.availablePackages.find((pkg) => pkg.product.identifier === LIFETIME_PRODUCT_ID) ??
-      current.lifetime ??
-      current.availablePackages[0] ??
-      null
-    );
+    const monthly =
+      current.availablePackages.find((pkg) => pkg.product.identifier === MONTHLY_PRODUCT_ID) ??
+      current.monthly ??
+      null;
+    // RevenueCat's predefined package-type field for a yearly plan is
+    // "annual", not "yearly" -- current.yearly doesn't exist.
+    const yearly =
+      current.availablePackages.find((pkg) => pkg.product.identifier === YEARLY_PRODUCT_ID) ??
+      current.annual ??
+      null;
+
+    return { monthly, yearly };
   } catch (error) {
     console.warn('getOfferings failed', error);
-    return null;
+    return { monthly: null, yearly: null };
   }
 }
 
-export async function purchaseLifetime(): Promise<CustomerInfo> {
+export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerInfo> {
   await initializeRevenueCat();
-  const pkg = await getLifetimePackage();
-
-  if (!pkg) {
-    throw new Error('Lifetime package is not available. Check your RevenueCat offering configuration.');
-  }
-
   const { customerInfo } = await Purchases.purchasePackage(pkg);
   return customerInfo;
 }

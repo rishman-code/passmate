@@ -16,7 +16,7 @@ React Native and Expo. It helps learners pass their DVSA driving theory test thr
 - Mock test simulator (50 questions, 57-minute timer, 43/50 pass mark)
 - Daily streak tracking to encourage consistent revision
 - User accounts with progress synced to Supabase
-- £5.99 one-time purchase via RevenueCat
+- £4.99/month or £49.99/year subscription via RevenueCat
 
 The app runs in a browser during development via `npx expo start --web`.
 The target platform is iOS App Store.
@@ -102,7 +102,7 @@ src/
 │   │   ├── session.tsx          # 50 questions / 57 min timer (modal)
 │   │   └── results.tsx          # Pass/fail results screen
 │   ├── mistake-ledger.tsx        # List of questions the user has flagged to revisit
-│   └── paywall.tsx               # £5.99 purchase modal
+│   └── paywall.tsx               # subscription plan picker modal (fallback UI)
 ├── components/
 │   ├── app-tabs.web.tsx         # Web-specific tab navigation
 │   ├── button.tsx               # Shared button component
@@ -429,15 +429,28 @@ Tracked in `progress-store.ts`:
 ### Paywall
 - Trigger: when free user attempts question 21+ in a day
 - Daily count resets at midnight
-- Product ID: `lifetime` (must match the RevenueCat offering AND the App Store Connect
-  In-App Purchase product ID exactly — see `LIFETIME_PRODUCT_ID` in `src/lib/revenuecat.ts`)
-- Entitlement ID: `GreenLight Pro` (must match RevenueCat exactly — see
-  `PRO_ENTITLEMENT_ID` in `src/lib/revenuecat.ts`)
-- Price: £5.99 one-time purchase
+- Two auto-renewable subscription plans, not a one-time purchase:
+  - Monthly product ID: `greenlight_monthly` (£4.99/month)
+  - Yearly product ID: `greenlight_yearly` (£49.99/year)
+  Both must match their RevenueCat product IDs AND their App Store Connect
+  In-App Purchase product IDs exactly -- see `MONTHLY_PRODUCT_ID` /
+  `YEARLY_PRODUCT_ID` in `src/lib/revenuecat.ts`. Both need to sit in the
+  same App Store Connect subscription group (Auto-Renewable Subscription,
+  not Non-Consumable) so a user can move between them.
+- Entitlement ID: `greenlight_theory_test` (must match RevenueCat exactly --
+  see `PRO_ENTITLEMENT_ID` in `src/lib/revenuecat.ts`), granted by either plan
+- Primary purchase path: RevenueCat's hosted Paywall UI
+  (`presentPaywall()` -> `RevenueCatUI.presentPaywallIfNeeded`), which reads
+  packages from whichever Offering is marked "current" in the RevenueCat
+  dashboard and needs no per-plan code on the app side
+- Fallback path (`src/app/paywall.tsx`, used when RevenueCat isn't configured
+  or the hosted paywall fails to present): a custom screen with Monthly/Yearly
+  plan cards, calling `purchase(plan)` in `subscription-store.ts` with
+  whichever plan is selected (defaults to Yearly)
 - When RevenueCat key is missing from `.env` (`EXPO_PUBLIC_REVENUECAT_IOS_KEY`):
-  auto-unlocks premium for everyone (dev mode) -- this is the current state, so
-  before any real users install the app, set a real key or every install ships
-  with premium already unlocked and the purchase never fires
+  auto-unlocks premium for everyone (dev mode) -- before any real users
+  install the app, set a real key or every install ships with premium
+  already unlocked and the purchase never fires
 
 ---
 

@@ -20,7 +20,7 @@ import type { DVSACategory } from '@/constants/categories';
 import {
   MOCK_TEST_PASS_SCORE,
   MOCK_TEST_QUESTION_COUNT,
-  PREMIUM_PRICE,
+  MONTHLY_PRICE,
 } from '@/constants/categories';
 import { JOURNEY_PROMPT_THRESHOLD } from '@/constants/journey';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
@@ -165,7 +165,7 @@ export default function HomeScreen() {
               <View style={styles.premiumText}>
                 <ThemedText style={styles.premiumTitle}>Unlock Full Access</ThemedText>
                 <ThemedText style={styles.premiumSubtitle}>
-                  AI explanations, mock tests & more — {PREMIUM_PRICE}
+                  AI explanations, mock tests & more — from {MONTHLY_PRICE}/mo
                 </ThemedText>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />

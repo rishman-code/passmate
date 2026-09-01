@@ -2,21 +2,24 @@ import { create } from 'zustand';
 
 import {
   getCustomerInfo,
+  getSubscriptionPackages,
   hasProEntitlement,
   initializeRevenueCat,
   isRevenueCatConfigured,
   presentCustomerCenter,
   presentPaywall,
-  purchaseLifetime,
+  purchasePackage,
   restorePurchases,
 } from '@/lib/revenuecat';
+
+export type SubscriptionPlan = 'monthly' | 'yearly';
 
 interface SubscriptionState {
   isPremium: boolean;
   isLoading: boolean;
   error: string | null;
   initialize: () => Promise<void>;
-  purchase: () => Promise<boolean>;
+  purchase: (plan: SubscriptionPlan) => Promise<boolean>;
   restore: () => Promise<boolean>;
   openPaywall: () => Promise<'presented' | 'fallback'>;
   openCustomerCenter: () => Promise<void>;
@@ -48,11 +51,18 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
     }
   },
 
-  purchase: async () => {
+  purchase: async (plan) => {
     set({ isLoading: true, error: null });
 
     try {
-      const customerInfo = await purchaseLifetime();
+      const { monthly, yearly } = await getSubscriptionPackages();
+      const pkg = plan === 'monthly' ? monthly : yearly;
+      if (!pkg) {
+        throw new Error(
+          `${plan === 'monthly' ? 'Monthly' : 'Yearly'} plan is not available. Check your RevenueCat offering configuration.`,
+        );
+      }
+      const customerInfo = await purchasePackage(pkg);
       const isPremium = hasProEntitlement(customerInfo);
       set({ isPremium, isLoading: false });
       return isPremium;

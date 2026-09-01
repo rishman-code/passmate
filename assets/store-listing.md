@@ -44,8 +44,8 @@ Take a full 50-question mock test with a live 57-minute countdown — exactly li
 WEAK SPOT TRACKER
 Your Progress screen shows accuracy per category, highlights where you're below the pass threshold, and keeps your mock test history so you can see improvement over time.
 
-ONE-TIME PURCHASE — NO SUBSCRIPTION
-GreenLight is £5.99 once. No monthly fees, no ads, no tricks. Buy it, pass your test, delete it.
+FLEXIBLE PLANS
+Go monthly at £4.99, or save with the yearly plan at £49.99. Cancel anytime.
 
 ---
 
@@ -71,10 +71,15 @@ Secondary: Utilities
 4+ (no objectionable content)
 
 ## Price
-£5.99  (Tier 6 — the App Store Connect In-App Purchase product ID must be exactly
-`lifetime`, matching RevenueCat's product ID and `LIFETIME_PRODUCT_ID` in
-`src/lib/revenuecat.ts`. RevenueCat's entitlement must be named exactly
-`GreenLight Pro`, matching `PRO_ENTITLEMENT_ID` in the same file.)
+Two auto-renewable subscription plans, both in the same App Store Connect
+subscription group:
+- Monthly: £4.99/month — product ID must be exactly `greenlight_monthly`
+- Yearly: £49.99/year — product ID must be exactly `greenlight_yearly`
+
+Both product IDs must match `MONTHLY_PRODUCT_ID` / `YEARLY_PRODUCT_ID` in
+`src/lib/revenuecat.ts` exactly, and both RevenueCat products need to be
+attached to a single entitlement named exactly `greenlight_theory_test`
+(matching `PRO_ENTITLEMENT_ID` in the same file).
 
 ---
 
