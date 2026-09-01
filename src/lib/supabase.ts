@@ -36,6 +36,10 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
+      // PKCE so the password-reset deep link carries a short-lived `code`
+      // query param we exchange manually (see auth/reset-password.tsx) —
+      // detectSessionInUrl is off, so nothing does this automatically.
+      flowType: 'pkce',
     },
   },
 );

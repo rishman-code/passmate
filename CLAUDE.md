@@ -87,7 +87,9 @@ src/
 │   ├── auth/
 │   │   ├── _layout.tsx          # Auth stack (no header, fade animation)
 │   │   ├── sign-in.tsx          # Email + password sign-in (+ Sign in with Apple on iOS)
-│   │   └── sign-up.tsx          # Name + email + password sign-up
+│   │   ├── sign-up.tsx          # Name + email + password sign-up
+│   │   ├── forgot-password.tsx  # Request a password-reset email
+│   │   └── reset-password.tsx   # Deep-linked from that email; sets a new password
 │   ├── journey/
 │   │   ├── setup.tsx             # "When's your test?" modal — same 4 states as onboarding's
 │   │   │                         #   journey step, editable any time after onboarding
@@ -308,6 +310,29 @@ SHA256 nonce round-trip, then `supabase.auth.signInWithIdToken({ provider: 'appl
 **Needs setup that only a human with dashboard access can do** before it will
 actually authenticate — see "What is blocked" below.
 
+**Forgot password** (`src/app/auth/forgot-password.tsx` → email →
+`requestPasswordReset()` in `src/lib/auth.ts` → `supabase.auth.resetPasswordForEmail()`):
+the "Forgot password?" link on `/auth/sign-in` sends a reset email via Supabase's
+own default email template (Supabase never reveals whether the address has an
+account — the screen always shows the same "check your email" confirmation).
+The link opens `/auth/reset-password?code=...` (built with `Linking.createURL()`,
+so it resolves to the app's `greenlight://` scheme on native and the site origin
+on web); that screen exchanges the one-time `code` for a short-lived recovery
+session (`exchangePasswordResetCode()`, PKCE flow — see `flowType: 'pkce'` in
+`src/lib/supabase.ts`), then lets the user set a new password
+(`updatePassword()` → `supabase.auth.updateUser({ password })`), then signs
+them into the app as normal.
+
+Root `_layout.tsx`'s redirects are pathname-gated around `/auth/reset-password`
+(`isResettingPassword`) — without that gate, the blanket welcome/onboarding/
+session redirects would hijack this screen mid-flow (to `/welcome` the instant
+it mounts on a cold deep-link launch, discarding the one-time code before it's
+even exchanged; then to `/(tabs)` the instant the exchange succeeds and
+`session` becomes non-null, before the user ever sees the new-password form).
+
+**Needs setup that only a human with dashboard access can do** before the
+email link will actually open the app — see "What is blocked" below.
+
 **Guest mode** (`src/lib/guest-mode.ts`): tapping "Not now — continue without
 an account" on sign-in sets a persisted flag that lets the root layout gate
 pass without a session. Progress/journey/mistake-ledger stores already work
@@ -416,6 +441,8 @@ Tracked in `progress-store.ts`:
 ### What is working
 - App runs in browser via `npx expo start --web`
 - Sign-up / sign-in / sign-out with Supabase Auth, plus guest mode
+- Forgot-password flow (request email → deep-linked reset-password screen → new password),
+  though the deep link needs the dashboard redirect-URL config below to actually open the app
 - Welcome screen (every cold launch) → multi-step onboarding (once) → journey setup
 - Journey tracking (preparing / booked / retake / certified), synced to `user_journey`
 - Retake flow (result-letter → retake plan) and certified flow (pass date → expiry notifications)
@@ -446,6 +473,15 @@ Tracked in `progress-store.ts`:
      Team ID, Key ID, and private key from Apple.
   Until both are done, tapping the button will fail (Supabase will reject
   the `signInWithIdToken` call with a "provider not enabled" style error).
+- **Password-reset email actually opening the app** — the code path is built
+  (`requestPasswordReset()` / `exchangePasswordResetCode()` / `updatePassword()`
+  in `src/lib/auth.ts`, `auth/forgot-password.tsx` + `auth/reset-password.tsx`),
+  but the redirect URL it sends (`greenlight://auth/reset-password`, built with
+  `Linking.createURL()`) needs to be added to the Supabase dashboard
+  (Authentication → URL Configuration → Redirect URLs) — only a human with
+  dashboard access can do this. Until it's added, Supabase silently ignores
+  the custom `redirectTo` and falls back to the project's default Site URL
+  instead, so the emailed link won't open the app.
 
 ### What could be built next
 1. `expo-secure-store` for the Supabase auth session (`src/lib/supabase.ts` still uses
