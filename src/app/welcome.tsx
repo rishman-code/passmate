@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
@@ -25,6 +26,14 @@ const WELCOME_FEATURES: WelcomeFeature[] = [
   { icon: 'gift-outline', text: 'Free trial unlocks everything, no limited version' },
 ];
 
+// A winding road behind the feature-card stack, drawn in a 0-100 percentage
+// coordinate space that stretches to fill the road section. Cards lay out
+// normally (a fixed gap, not pinned coordinates), so long text can never
+// make a card overlap its neighbour -- the curve just needs to visually pass
+// behind the left/right/left zigzag of card1 -> card2 -> card3, not hit
+// exact coordinates.
+const ROAD_PATH = 'M 20 6 C 85 16, 88 34, 55 44 C 20 54, 10 74, 20 94';
+
 export default function WelcomeScreen() {
   const theme = useTheme();
   const markWelcomeSeen = useWelcomeSessionStore((s) => s.markWelcomeSeen);
@@ -44,36 +53,62 @@ export default function WelcomeScreen() {
   return (
     <ThemedView style={styles.container} testID="welcome-screen">
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.avatarRow}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
             <Image
               source={require('@/assets/images/welcome-mascot.png')}
               style={[styles.avatar, tactileShadow(theme.borderHard, 4)]}
               contentFit="contain"
             />
+            <ThemedText type="title" style={styles.title}>
+              Welcome to GreenLight
+            </ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.subtitle}>
+              Your theory test coach
+            </ThemedText>
           </View>
 
-          <ThemedText type="title" style={styles.title}>
-            Welcome to GreenLight
-          </ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-            Your theory test coach
-          </ThemedText>
+          <View style={styles.roadSection} testID="welcome-road-section">
+            <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none">
+              <Path
+                d={ROAD_PATH}
+                stroke={theme.borderHard}
+                strokeWidth={5}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <Path
+                d={ROAD_PATH}
+                stroke="#FFFFFF"
+                strokeWidth={0.9}
+                strokeDasharray="3.2,3.2"
+                fill="none"
+                strokeLinecap="round"
+              />
+            </Svg>
 
-          <View style={styles.features}>
-            {WELCOME_FEATURES.map((feature) => (
-              <View
-                key={feature.text}
-                style={[
-                  styles.featureCard,
-                  { backgroundColor: theme.card, borderColor: theme.borderHard, ...tactileShadow(theme.borderHard, 3) },
-                ]}>
-                <View style={[styles.featureIcon, { backgroundColor: theme.backgroundElement }]}>
-                  <Ionicons name={feature.icon} size={20} color={theme.primary} />
+            <View style={styles.cardStack}>
+              {WELCOME_FEATURES.map((feature, index) => (
+                <View
+                  key={feature.text}
+                  style={[
+                    styles.featureCard,
+                    index % 2 === 0 ? styles.cardLeft : styles.cardRight,
+                    {
+                      backgroundColor: theme.card,
+                      borderColor: theme.borderHard,
+                      ...tactileShadow(theme.borderHard, 4),
+                    },
+                  ]}
+                  testID={`welcome-feature-${feature.icon}`}>
+                  <View style={[styles.featureIcon, { backgroundColor: theme.backgroundElement }]}>
+                    <Ionicons name={feature.icon} size={26} color={theme.primary} />
+                  </View>
+                  <ThemedText style={styles.featureText}>{feature.text}</ThemedText>
                 </View>
-                <ThemedText style={styles.featureText}>{feature.text}</ThemedText>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
         </ScrollView>
 
@@ -98,33 +133,45 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  scroll: { padding: Spacing.four, paddingTop: Spacing.six, gap: Spacing.three, alignItems: 'center' },
-  avatarRow: { alignItems: 'center', marginBottom: Spacing.one },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: BorderRadius.full,
+  scrollView: { flex: 1 },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.four,
   },
-  title: { textAlign: 'center' },
-  subtitle: { textAlign: 'center', marginBottom: Spacing.two },
-  features: { width: '100%', gap: Spacing.three },
+  header: { alignItems: 'center', gap: Spacing.one, marginBottom: Spacing.three },
+  avatar: {
+    width: 68,
+    height: 68,
+    borderRadius: BorderRadius.full,
+    marginBottom: Spacing.one,
+  },
+  title: { textAlign: 'center', fontSize: 36, lineHeight: 40 },
+  subtitle: { textAlign: 'center', fontSize: 18, lineHeight: 24, fontFamily: Fonts.bodyMedium },
+  roadSection: { position: 'relative' },
+  cardStack: { gap: Spacing.three },
   featureCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    borderRadius: BorderRadius.xl,
     borderWidth: 2,
+    width: '86%',
   },
+  cardLeft: { alignSelf: 'flex-start' },
+  cardRight: { alignSelf: 'flex-end' },
   featureIcon: {
-    width: 42,
-    height: 42,
-    minWidth: 42,
+    width: 52,
+    height: 52,
+    minWidth: 52,
     borderRadius: BorderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  featureText: { flex: 1, fontSize: 14.5, lineHeight: 20, fontFamily: Fonts.bodyBold },
+  featureText: { flex: 1, fontSize: 16, lineHeight: 20, fontFamily: Fonts.bodyBold },
   footer: { padding: Spacing.four, paddingTop: Spacing.two, gap: Spacing.three },
   haveAccountPressable: { alignItems: 'center' },
   haveAccountText: { textDecorationLine: 'underline' },
