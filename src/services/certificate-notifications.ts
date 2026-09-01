@@ -5,14 +5,24 @@ import type { LocalDate } from '@/types/journey';
 import { buildCertificateExpiryNotifications } from '@/utils/certificate-notifications';
 import { compareLocalDates, parseLocalDate, todayInLondon } from '@/utils/journey-dates';
 
+const NOTIFICATION_IDS = [
+  'greenlight-certificate-rebook-early',
+  'greenlight-certificate-waits-long',
+  'greenlight-certificate-one-month',
+  'greenlight-certificate-two-weeks',
+];
+
 /**
  * Schedules the certificate-expiry reminders as local notifications, after
  * requesting permission — this should only ever be called at the moment the
  * user saves a pass date, never on first launch, per the journey spec.
  * Cancels any previously scheduled certificate reminders first, so this also
- * doubles as the reschedule path when the pass date is edited. No-ops on web
- * (local notification scheduling is a native-only capability here) and skips
- * any trigger date that's already in the past.
+ * doubles as the reschedule path when the pass date is edited. Cancels by
+ * fixed id (rather than cancelAllScheduledNotificationsAsync) so this never
+ * clobbers the unrelated re-engagement reminders, which share the OS
+ * notification scheduler. No-ops on web (local notification scheduling is a
+ * native-only capability here) and skips any trigger date that's already in
+ * the past.
  */
 export async function scheduleCertificateExpiryNotifications(expiryDate: LocalDate): Promise<void> {
   if (Platform.OS === 'web') return;
@@ -20,7 +30,7 @@ export async function scheduleCertificateExpiryNotifications(expiryDate: LocalDa
   const { status } = await Notifications.requestPermissionsAsync();
   if (status !== 'granted') return;
 
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  await cancelCertificateExpiryNotifications();
 
   const today = todayInLondon();
   for (const spec of buildCertificateExpiryNotifications(expiryDate)) {
@@ -28,6 +38,7 @@ export async function scheduleCertificateExpiryNotifications(expiryDate: LocalDa
 
     const { year, month, day } = parseLocalDate(spec.date);
     await Notifications.scheduleNotificationAsync({
+      identifier: spec.id,
       content: { title: spec.title, body: spec.body },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -39,5 +50,5 @@ export async function scheduleCertificateExpiryNotifications(expiryDate: LocalDa
 
 export async function cancelCertificateExpiryNotifications(): Promise<void> {
   if (Platform.OS === 'web') return;
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  await Promise.all(NOTIFICATION_IDS.map((id) => Notifications.cancelScheduledNotificationAsync(id).catch(() => {})));
 }
