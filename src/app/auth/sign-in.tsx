@@ -158,6 +158,13 @@ export default function SignInScreen() {
                   returnKeyType="done"
                   onSubmitEditing={handleSignIn}
                 />
+                <ThemedText
+                  type="small"
+                  style={styles.forgotPasswordLink}
+                  onPress={() => router.push('/auth/forgot-password')}
+                  testID="forgot-password-link">
+                  Forgot password?
+                </ThemedText>
               </View>
 
               {error ? (
@@ -226,6 +233,11 @@ const styles = StyleSheet.create({
   },
   form: { gap: Spacing.three },
   field: { gap: Spacing.one },
+  forgotPasswordLink: {
+    alignSelf: 'flex-end',
+    textDecorationLine: 'underline',
+    marginTop: Spacing.one,
+  },
   input: {
     borderWidth: 2,
     borderRadius: BorderRadius.md,

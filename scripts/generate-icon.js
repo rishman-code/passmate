@@ -38,12 +38,12 @@ const iconHtml = `<!DOCTYPE html>
     width: 1024px;
     height: 1024px;
     overflow: hidden;
-    background: #FF4500;
+    background: #00A85E;
     display: flex;
     align-items: center;
     justify-content: center;
     /* Subtle radial gradient for depth */
-    background: radial-gradient(ellipse at 38% 30%, #FF6A33 0%, #FF4500 55%, #D93C00 100%);
+    background: radial-gradient(ellipse at 38% 30%, #2ECC81 0%, #00A85E 55%, #00753F 100%);
   }
 
   .icon {
@@ -102,7 +102,7 @@ const splashHtml = `<!DOCTYPE html>
 
 async function generate() {
   const browser = await chromium.launch({
-    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || '/opt/pw-browsers/chromium',
     headless: true,
     args: ['--no-sandbox'],
   });
