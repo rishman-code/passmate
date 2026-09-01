@@ -52,3 +52,6 @@ credentials.json
 # DVSA question bank source files (large binaries)
 wetransfer_*.zip
 wetransfer_extracted/
+
+# Supabase CLI local project-link cache
+supabase/.temp/
