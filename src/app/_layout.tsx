@@ -22,6 +22,7 @@ import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 import { useCertificateExpiryWatch } from '@/hooks/use-certificate-expiry-watch';
+import { useReEngagementReminders } from '@/hooks/use-re-engagement-reminders';
 import { isGuestMode } from '@/lib/guest-mode';
 import { hasSeenOnboarding } from '@/lib/onboarding';
 import { useAuthStore } from '@/stores/auth-store';
@@ -47,6 +48,10 @@ export default function RootLayout() {
   const [isGuest, setIsGuest] = useState(false);
 
   useCertificateExpiryWatch();
+  // Only once the user has actually reached the app -- past onboarding, and
+  // either signed in or in guest mode -- so we don't prompt for notification
+  // permission before they've even seen it.
+  useReEngagementReminders(onboardingChecked && !needsOnboarding && guestChecked && (session != null || isGuest));
 
   const [outfitLoaded] = useOutfitFonts({
     Outfit_500Medium,
@@ -149,6 +154,12 @@ export default function RootLayout() {
         !session &&
         guestChecked &&
         !isGuest && <Redirect href="/auth/sign-in" />}
+      {navigationReady &&
+        hasSeenWelcome &&
+        onboardingChecked &&
+        !needsOnboarding &&
+        guestChecked &&
+        (session || isGuest) && <Redirect href="/(tabs)" />}
     </ThemeProvider>
   );
 }
