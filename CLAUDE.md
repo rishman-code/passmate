@@ -73,7 +73,11 @@ premium features in dev mode. Do not break this behaviour.
 ```
 src/
 ├── app/
-│   ├── _layout.tsx              # Root stack + auth gate + onboarding redirect
+│   ├── _layout.tsx              # Root stack + auth gate + welcome/onboarding redirect
+│   ├── welcome.tsx               # Welcome screen — shown before onboarding on every cold
+│   │                             #   launch until dismissed (session-only, welcome-session-store)
+│   ├── onboarding.tsx            # Multi-step onboarding (intro slides → journey → weak-topics
+│   │                             #   → plan preview), shown once until markOnboardingComplete()
 │   ├── (tabs)/
 │   │   ├── _layout.tsx          # Bottom tabs (Ionicons)
 │   │   ├── index.tsx            # Home dashboard (stats, streaks, weak spots)
@@ -82,17 +86,21 @@ src/
 │   │   └── profile.tsx          # Account info, premium status, sign out
 │   ├── auth/
 │   │   ├── _layout.tsx          # Auth stack (no header, fade animation)
-│   │   ├── sign-in.tsx          # Email + password sign-in
+│   │   ├── sign-in.tsx          # Email + password sign-in (+ Sign in with Apple on iOS)
 │   │   └── sign-up.tsx          # Name + email + password sign-up
-│   ├── onboarding/
-│   │   └── index.tsx            # 3-slide onboarding (shown on first launch only)
+│   ├── journey/
+│   │   ├── setup.tsx             # "When's your test?" modal — same 4 states as onboarding's
+│   │   │                         #   journey step, editable any time after onboarding
+│   │   ├── result-letter.tsx     # Retake flow: enter DVSA result letter data, builds retake plan
+│   │   └── certificate.tsx       # Certified flow: enter pass date, schedules expiry reminders
 │   ├── practice/
 │   │   └── session.tsx          # Adaptive practice flow (modal)
 │   ├── mock-test/
 │   │   ├── index.tsx            # Mock test intro and rules
 │   │   ├── session.tsx          # 50 questions / 57 min timer (modal)
 │   │   └── results.tsx          # Pass/fail results screen
-│   └── paywall.tsx              # £5.99 purchase modal
+│   ├── mistake-ledger.tsx        # List of questions the user has flagged to revisit
+│   └── paywall.tsx               # £5.99 purchase modal
 ├── components/
 │   ├── app-tabs.web.tsx         # Web-specific tab navigation
 │   ├── button.tsx               # Shared button component
@@ -103,39 +111,71 @@ src/
 │   ├── stat-card.tsx            # Dashboard stat display (label + value)
 │   ├── themed-text.tsx          # Theme-aware text component
 │   ├── themed-view.tsx          # Theme-aware view component
-│   └── ai-explanation.tsx       # AI explanation display with loading state
+│   ├── ai-explanation.tsx       # AI explanation display with loading state
+│   ├── calendar-date-picker.tsx # Date picker used by onboarding/journey screens
+│   ├── category-card.tsx        # Category tile on the practice screen
+│   ├── certificate-status-screen.tsx # Shown when journey state is "certified"
+│   ├── countdown-card.tsx       # Days-to-test countdown on the dashboard
+│   ├── journey-prompt-banner.tsx     # Nudges users who haven't set a journey state
+│   ├── rate-app-modal.tsx       # App Store rating prompt (see rate-app-store)
+│   ├── retake-card.tsx          # Retake plan summary card
+│   └── test-day-card.tsx        # Test-day dashboard card
 ├── constants/
-│   ├── theme.ts                 # BorderRadius, Spacing, tactileShadow constants
-│   ├── colors.ts                # Full colour palette (light + dark)
-│   ├── typography.ts            # Text style constants (Outfit + Plus Jakarta Sans)
-│   └── categories.ts            # All 14 DVSA category names, PREMIUM_PRICE
+│   ├── theme.ts                 # BorderRadius, Spacing, tactileShadow, Colors, Fonts
+│   ├── categories.ts            # All 14 DVSA category names, PREMIUM_PRICE
+│   └── journey.ts               # Journey-related constants
+├── data/
+│   ├── bank-holidays-fallback.json  # Bundled snapshot used when the gov.uk feed is unreachable
+│   └── sample-questions.ts
 ├── hooks/
 │   ├── use-questions.ts         # Question fetching + weak category computation
-│   └── use-theme.ts             # Theme hook (light/dark aware)
+│   ├── use-theme.ts             # Theme hook (light/dark aware)
+│   ├── use-bank-holidays.ts     # UK bank holidays (for retake-date maths)
+│   └── use-certificate-expiry-watch.ts # Watches journey state, re-schedules expiry notifications
 ├── lib/
-│   ├── supabase.ts              # Supabase client (SSR-safe auth storage)
-│   └── auth.ts                  # signUp / signIn / signOut / friendlyAuthError
+│   ├── supabase.ts              # Supabase client (SSR-safe auth storage, AsyncStorage-backed)
+│   ├── auth.ts                  # signUp / signIn / signOut / signInWithApple / friendlyAuthError
+│   ├── guest-mode.ts            # Guest-mode flag — lets the auth gate pass without a session
+│   ├── onboarding.ts            # hasSeenOnboarding / markOnboardingComplete (SecureStore/localStorage)
+│   └── revenuecat.ts / revenuecat.web.ts
 ├── services/
 │   ├── questions.ts             # fetchAllQuestions, fetchQuestionsByCategory, selectMockTestQuestions
 │   ├── ai-explanations.ts       # getAIExplanation — calls Edge Function, in-memory cache
-│   └── revenuecat.ts            # RevenueCat purchase service
+│   ├── bank-holidays.ts         # Cached fetch of gov.uk bank holidays, with bundled fallback
+│   └── certificate-notifications.ts # Schedules local notifications for certificate expiry
 ├── stores/
 │   ├── auth-store.ts            # Supabase session + user (Zustand)
 │   ├── subscription-store.ts    # Premium status (Zustand, RevenueCat)
 │   ├── progress-store.ts        # Progress, mock results, streaks (Zustand + AsyncStorage persist)
 │   ├── practice-store.ts        # Current practice session (Zustand)
-│   └── mock-test-store.ts       # Current mock test session (Zustand)
+│   ├── mock-test-store.ts       # Current mock test session (Zustand)
+│   ├── journey-store.ts         # Journey state (preparing/booked/retake/certified), synced to
+│   │                             #   user_journey table (Zustand + AsyncStorage persist)
+│   ├── mistake-ledger-store.ts  # Flagged question IDs — local-only, no Supabase table
+│   ├── rate-app-store.ts        # Rate-app prompt decision/snooze state
+│   └── welcome-session-store.ts # Whether the welcome screen has been dismissed this session
 ├── types/
-│   └── database.ts              # TypeScript interfaces for all DB types
+│   ├── database.ts              # TypeScript interfaces for all DB types
+│   └── journey.ts               # UserJourney, JourneyState, TestResult, Certificate types
 └── utils/
-    └── practice.ts              # buildAdaptiveQuestionQueue function
+    ├── practice.ts               # buildAdaptiveQuestionQueue function
+    ├── plan.ts                   # buildPlan — generates the onboarding/dashboard study plan
+    ├── retake-plan.ts            # Plan generation for the retake journey state
+    ├── readiness.ts              # Test-readiness scoring
+    ├── category-scores.ts        # Per-category accuracy calculation
+    ├── journey-dates.ts          # LocalDate helpers, all Europe/London (todayInLondon, addYears, ...)
+    ├── mistake-ledger.ts         # Mistake-ledger helpers
+    └── session-shape.ts          # Shared question-session shaping logic
 supabase/
 ├── functions/
 │   └── ai-explanation/
 │       └── index.ts             # Deno Edge Function — auth check + Anthropic call + cache
 ├── schema.sql                   # Full database schema (already applied)
+├── seed_questions.sql           # Seed data for the questions table
 ├── migration-add-auth.sql       # Adds user_id to progress tables, enables RLS (already run)
-└── migration-cache-rls.sql      # Enables RLS on ai_explanation_cache (already run)
+├── migration-cache-rls.sql      # Enables RLS on ai_explanation_cache (already run)
+├── migration-add-journey.sql    # Adds user_journey table (already run)
+└── migration-add-self-reported-weak-topics.sql # Adds self_reported_weak_topics to user_journey (already run)
 ```
 
 ---
@@ -196,6 +236,20 @@ interface MockTestResult {
 }
 ```
 
+**user_journey** — RLS ON (users see only their own row), one row per user (`user_id` is the
+primary key). Backs `src/stores/journey-store.ts` / `src/types/journey.ts`.
+```typescript
+interface UserJourneyRow {
+  user_id: string;                    // uuid, references auth.users, PK
+  state: 'preparing' | 'booked' | 'retake' | 'certified';
+  test_date: string | null;           // date, only set when state = 'booked'
+  last_result: TestResult | null;     // jsonb — most recent retake result, if any
+  certificate: Certificate | null;    // jsonb — pass date/expiry/cert number, if state = 'certified'
+  self_reported_weak_topics: string[]; // jsonb — chosen during onboarding, default []
+  updated_at: string;
+}
+```
+
 ### RLS Summary
 | Table | RLS | Notes |
 |---|---|---|
@@ -203,6 +257,7 @@ interface MockTestResult {
 | user_progress | ON | Policy: `auth.uid() = user_id` |
 | mock_test_results | ON | Policy: `auth.uid() = user_id` |
 | ai_explanation_cache | ON | Authenticated SELECT; INSERT/UPDATE via service role only |
+| user_journey | ON | Policy: `auth.uid() = user_id` (all operations) |
 
 ---
 
@@ -261,6 +316,43 @@ Supabase — it stays on-device until the user signs in for real (which clears
 the flag and starts syncing going forward; existing local guest data is not
 retroactively uploaded). Profile screen shows a "Guest" state with a Sign In
 CTA instead of account info + Sign Out.
+
+### Welcome & Onboarding
+Two separate screens, both gated in `src/app/_layout.tsx` (in this order):
+
+1. **`/welcome`** (`src/app/welcome.tsx`) — shown on every cold launch until dismissed via
+   `welcome-session-store` (`markWelcomeSeen()` — session-only, not the persisted onboarding flag).
+   "Next" falls through to the onboarding/auth redirect below; "I have an account" marks
+   onboarding complete too and jumps straight to `/auth/sign-in`.
+2. **`/onboarding`** (`src/app/onboarding.tsx`) — shown once, until `markOnboardingComplete()`
+   (`src/lib/onboarding.ts`, backed by `expo-secure-store` on native / `localStorage` on web).
+   Not a fixed slide count — pages are built dynamically:
+   - 3 intro slides (swipeable, skippable)
+   - A **journey** step ("When's your test?") — same 4 states as `journey/setup.tsx`
+     (`preparing` / `booked` / `retake` / `certified`), with a date picker if `booked`
+   - If state is `retake` or `certified`, the flow **stops there** and routes straight to
+     `/journey/result-letter` or `/journey/certificate` on finish
+   - Otherwise it continues to a **weak-topics** step (self-reported weak DVSA categories,
+     `selfReportedWeakCategories`) and a **plan** step (preview from `buildPlan()`), then
+     finishes to `/(tabs)`
+
+Redirect order in `_layout.tsx`: not seen welcome → `/welcome`; seen welcome + onboarding
+not complete → `/onboarding`; seen welcome + onboarding complete + no session + not guest →
+`/auth/sign-in`.
+
+### Journey (test date / retake / certificate tracking)
+`src/stores/journey-store.ts`, synced to the `user_journey` table per authenticated user
+(guest/local-only otherwise, like the other stores). `state` is one of `preparing`, `booked`,
+`retake`, `certified`; editable after onboarding via the `/journey/setup` modal. `retake` routes
+through `/journey/result-letter` (DVSA result-letter data → `src/utils/retake-plan.ts`);
+`certified` routes through `/journey/certificate` (pass date → schedules certificate-expiry
+local notifications via `src/services/certificate-notifications.ts`, watched for changes by
+`use-certificate-expiry-watch.ts`). Retake-date maths uses UK bank holidays
+(`src/services/bank-holidays.ts`, cached fetch of the gov.uk feed with a bundled JSON fallback).
+
+### Mistake Ledger
+`src/stores/mistake-ledger-store.ts` — local-only flagged-question-ID set (no Supabase table,
+no sync), persisted via AsyncStorage, cleared only on sign-out. Viewed at `/mistake-ledger`.
 
 ### Adaptive Practice
 Questions are weighted by performance:
@@ -323,8 +415,11 @@ Tracked in `progress-store.ts`:
 
 ### What is working
 - App runs in browser via `npx expo start --web`
-- Sign-up / sign-in / sign-out with Supabase Auth
-- Onboarding (3 slides, shown once per device)
+- Sign-up / sign-in / sign-out with Supabase Auth, plus guest mode
+- Welcome screen (every cold launch) → multi-step onboarding (once) → journey setup
+- Journey tracking (preparing / booked / retake / certified), synced to `user_journey`
+- Retake flow (result-letter → retake plan) and certified flow (pass date → expiry notifications)
+- Mistake ledger (flag questions to revisit, local-only)
 - All 14 DVSA categories displayed; 717 questions in Supabase
 - Adaptive practice with weighted question queue
 - Progress persisted locally (AsyncStorage) and synced to Supabase per user
@@ -332,7 +427,8 @@ Tracked in `progress-store.ts`:
 - AI explanations via Supabase Edge Function (Anthropic key server-side)
 - Mock test timer and flow
 - RevenueCat dev mode unlocks premium
-- TypeScript: zero errors (`npx tsc --noEmit` is clean)
+- Rate-app prompt with snooze/never-ask-again state
+- TypeScript: zero errors (`npx tsc --noEmit` is clean, once `npm install` has been run)
 - App Store assets: icon, screenshots, store listing copy, privacy policy
 
 ### What is blocked
@@ -352,8 +448,11 @@ Tracked in `progress-store.ts`:
   the `signInWithIdToken` call with a "provider not enabled" style error).
 
 ### What could be built next
-1. `expo-secure-store` for auth tokens (medium security improvement — store in Keychain on native)
-2. Push notifications infrastructure (Expo Notifications — infra now, delivery when Apple account ready)
+1. `expo-secure-store` for the Supabase auth session (`src/lib/supabase.ts` still uses
+   AsyncStorage/localStorage; `expo-secure-store` is already used for the onboarding flag only)
+2. Push notifications infrastructure for general reminders (certificate-expiry reminders are
+   already implemented via local notifications — see `src/services/certificate-notifications.ts`;
+   remote/delivery-based push still needs an Apple Developer account)
 3. Leaderboard or social features
 4. More questions (717 is good; DVSA bank has 900+)
 
@@ -402,5 +501,8 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx expo start --web
 ## First Thing to Do in Every Claude Code Session
 
 1. Read this file fully
-2. Run `npx tsc --noEmit` to confirm zero TypeScript errors
-3. Do not add new features until the TypeScript check is clean
+2. If `node_modules/` is missing or empty, run `npm install` first — otherwise
+   `npx tsc --noEmit` fails with a wall of "Cannot find module" errors that look like
+   real type errors but aren't
+3. Run `npx tsc --noEmit` to confirm zero TypeScript errors
+4. Do not add new features until the TypeScript check is clean

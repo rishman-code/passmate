@@ -149,6 +149,12 @@ export default function RootLayout() {
         !session &&
         guestChecked &&
         !isGuest && <Redirect href="/auth/sign-in" />}
+      {navigationReady &&
+        hasSeenWelcome &&
+        onboardingChecked &&
+        !needsOnboarding &&
+        guestChecked &&
+        (session || isGuest) && <Redirect href="/(tabs)" />}
     </ThemeProvider>
   );
 }
