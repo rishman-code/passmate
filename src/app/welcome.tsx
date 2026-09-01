@@ -69,7 +69,12 @@ export default function WelcomeScreen() {
           </View>
 
           <View style={styles.roadSection} testID="welcome-road-section">
-            <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none">
+            <Svg
+              width="100%"
+              height="100%"
+              style={StyleSheet.absoluteFill}
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none">
               <Path
                 d={ROAD_PATH}
                 stroke={theme.borderHard}
@@ -149,8 +154,14 @@ const styles = StyleSheet.create({
   },
   title: { textAlign: 'center', fontSize: 36, lineHeight: 40 },
   subtitle: { textAlign: 'center', fontSize: 18, lineHeight: 24, fontFamily: Fonts.bodyMedium },
-  roadSection: { position: 'relative' },
-  cardStack: { gap: Spacing.three },
+  // flex: 1 so this stretches to fill whatever room is left in the scroll
+  // container below the header -- on a tall screen that spreads the cards
+  // (via cardStack's own flex + space-between) much further apart instead
+  // of leaving empty space at the bottom; on a short screen where content
+  // already exceeds the viewport this is a no-op and the ScrollView just
+  // scrolls, same as before.
+  roadSection: { position: 'relative', flex: 1 },
+  cardStack: { flex: 1, justifyContent: 'space-between' },
   featureCard: {
     flexDirection: 'row',
     alignItems: 'center',
