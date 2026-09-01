@@ -21,6 +21,15 @@ import { setGuestMode } from '@/lib/guest-mode';
 import { useJourneyStore } from '@/stores/journey-store';
 import { useProgressStore } from '@/stores/progress-store';
 
+// The button is fully wired up (see handleAppleSignIn below) but needs two
+// pieces of external config neither the app nor this flag can fix: the
+// "Sign in with Apple" capability enabled for the bundle ID in the Apple
+// Developer portal, and Apple added as an OAuth provider in the Supabase
+// dashboard (Services ID, Team ID, Key ID, private key). Until both are
+// done, tapping it is a dead end for anyone who tries -- flip this back to
+// true once that setup is complete.
+const APPLE_SIGN_IN_ENABLED = false;
+
 export default function SignInScreen() {
   const theme = useTheme();
   const loadFromSupabase = useProgressStore((s) => s.loadFromSupabase);
@@ -90,7 +99,7 @@ export default function SignInScreen() {
               <ThemedText themeColor="textSecondary">Sign in to your GreenLight account.</ThemedText>
             </View>
 
-            {Platform.OS === 'ios' ? (
+            {Platform.OS === 'ios' && APPLE_SIGN_IN_ENABLED ? (
               <View style={styles.appleSection}>
                 <AppleAuthentication.AppleAuthenticationButton
                   buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}

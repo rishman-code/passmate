@@ -57,7 +57,9 @@ GreenLight is not affiliated with or endorsed by the Driver and Vehicle Standard
 https://github.com/rishman-code/passmate/issues
 
 ## Privacy Policy URL
-(create a simple privacy policy page — you can use a free generator like privacypolicies.com)
+`docs/privacy-policy.html` in this repo is the actual policy text. Enable GitHub Pages
+for this repo (Settings → Pages → Source: `main` branch, `/docs` folder) and use the
+resulting URL (e.g. `https://rishman-code.github.io/passmate/`) here.
 
 ---
 
@@ -69,7 +71,10 @@ Secondary: Utilities
 4+ (no objectionable content)
 
 ## Price
-£5.99  (Tier 6 — "greenlight_lifetime" product in RevenueCat)
+£5.99  (Tier 6 — the App Store Connect In-App Purchase product ID must be exactly
+`lifetime`, matching RevenueCat's product ID and `LIFETIME_PRODUCT_ID` in
+`src/lib/revenuecat.ts`. RevenueCat's entitlement must be named exactly
+`GreenLight Pro`, matching `PRO_ENTITLEMENT_ID` in the same file.)
 
 ---
 

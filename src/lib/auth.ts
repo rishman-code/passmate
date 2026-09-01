@@ -64,6 +64,18 @@ export async function signOut() {
 }
 
 /**
+ * Permanently deletes the signed-in user's account via the delete-account
+ * Edge Function (needs the service-role key, which only server-side code
+ * can hold). The Edge Function derives which account to delete from the
+ * caller's own JWT, and Postgres cascade-deletes user_progress,
+ * mock_test_results, and user_journey along with it.
+ */
+export async function deleteAccount() {
+  const { error } = await supabase.functions.invoke('delete-account');
+  if (error) throw error;
+}
+
+/**
  * Sends a "reset your password" email via Supabase Auth. The link inside it
  * opens auth/reset-password.tsx with a one-time `code` param, which that
  * screen exchanges for a short-lived recovery session.

@@ -429,10 +429,15 @@ Tracked in `progress-store.ts`:
 ### Paywall
 - Trigger: when free user attempts question 21+ in a day
 - Daily count resets at midnight
-- Product ID: `greenlight_lifetime`
-- Entitlement ID: `premium`
+- Product ID: `lifetime` (must match the RevenueCat offering AND the App Store Connect
+  In-App Purchase product ID exactly — see `LIFETIME_PRODUCT_ID` in `src/lib/revenuecat.ts`)
+- Entitlement ID: `GreenLight Pro` (must match RevenueCat exactly — see
+  `PRO_ENTITLEMENT_ID` in `src/lib/revenuecat.ts`)
 - Price: £5.99 one-time purchase
-- When RevenueCat key is placeholder: auto-unlock premium (dev mode)
+- When RevenueCat key is missing from `.env` (`EXPO_PUBLIC_REVENUECAT_IOS_KEY`):
+  auto-unlocks premium for everyone (dev mode) -- this is the current state, so
+  before any real users install the app, set a real key or every install ships
+  with premium already unlocked and the purchase never fires
 
 ---
 

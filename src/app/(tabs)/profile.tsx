@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,7 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { PREMIUM_PRICE } from '@/constants/categories';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { signOut } from '@/lib/auth';
+import { deleteAccount, signOut } from '@/lib/auth';
 import { setGuestMode } from '@/lib/guest-mode';
 import { resetOnboardingSeen } from '@/lib/onboarding';
 import { useAuthStore } from '@/stores/auth-store';
@@ -44,6 +45,7 @@ export default function ProfileScreen() {
   const resetJourney = useJourneyStore((s) => s.reset);
   const resetMistakeLedger = useMistakeLedgerStore((s) => s.reset);
   const resetWelcomeSeen = useWelcomeSessionStore((s) => s.resetWelcomeSeen);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const displayName = user ? ((user.user_metadata?.name as string | undefined) ?? user.email ?? 'Account') : 'Guest';
 
@@ -67,6 +69,35 @@ export default function ProfileScreen() {
     resetJourney();
     resetMistakeLedger();
     router.replace('/auth/sign-in');
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete account?',
+      'This permanently deletes your account and all your progress. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeletingAccount(true);
+            try {
+              await deleteAccount();
+            } catch {
+              setIsDeletingAccount(false);
+              Alert.alert('Something went wrong', 'Could not delete your account. Please try again.');
+              return;
+            }
+            await signOut();
+            resetProgress();
+            resetJourney();
+            resetMistakeLedger();
+            router.replace('/auth/sign-in');
+          },
+        },
+      ],
+    );
   };
 
   // Hidden test-only escape hatch (long-press the footer disclaimer) to replay
@@ -226,13 +257,23 @@ export default function ProfileScreen() {
               testID="profile-restore-button"
             />
             {user ? (
-              <Button
-                title="Sign Out"
-                variant="outline"
-                onPress={handleSignOut}
-                fullWidth
-                testID="profile-sign-out-button"
-              />
+              <>
+                <Button
+                  title="Sign Out"
+                  variant="outline"
+                  onPress={handleSignOut}
+                  fullWidth
+                  testID="profile-sign-out-button"
+                />
+                <Button
+                  title="Delete Account"
+                  variant="danger"
+                  onPress={handleDeleteAccount}
+                  loading={isDeletingAccount}
+                  fullWidth
+                  testID="profile-delete-account-button"
+                />
+              </>
             ) : (
               <Button
                 title="Sign In"
