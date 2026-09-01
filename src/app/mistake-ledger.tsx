@@ -60,6 +60,7 @@ export default function MistakeLedgerScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
           contentContainerStyle={styles.filterRow}
           testID="mistake-ledger-filter-row">
           <Pressable
@@ -95,7 +96,7 @@ export default function MistakeLedgerScreen() {
           ))}
         </ScrollView>
 
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.entriesScroll} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {entries.length === 0 ? (
             <View
               style={[styles.empty, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
@@ -167,6 +168,10 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  filterScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   filterRow: {
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
@@ -177,6 +182,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
     borderRadius: BorderRadius.full,
     borderWidth: 1.5,
+  },
+  entriesScroll: {
+    flex: 1,
   },
   scroll: {
     padding: Spacing.four,
