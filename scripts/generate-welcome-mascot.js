@@ -1,6 +1,6 @@
 /**
  * Generates the car mascot icon shown on the Welcome to GreenLight screen,
- * as a transparent-background PNG (the peach circle + black outline are
+ * as a transparent-background PNG (the green circle + black outline are
  * baked into the artwork; the app wraps it in its own tactileShadow).
  *
  * Rendered at 3x (312x312 for a 104x104 display size) for retina clarity,
@@ -33,7 +33,7 @@ const html = `<!DOCTYPE html>
     width: ${SIZE}px;
     height: ${SIZE}px;
     border-radius: 50%;
-    background: #F5A97F;
+    background: #7ED9A6;
     border: ${3 * SCALE}px solid #000;
     display: flex;
     align-items: center;
