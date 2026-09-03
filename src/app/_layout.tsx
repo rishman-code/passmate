@@ -25,6 +25,7 @@ import {
   usePathname,
   useRootNavigationState,
 } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
@@ -60,7 +61,20 @@ export default function RootLayout() {
   // even exchanged), then to sign-in (no session yet), then to tabs the
   // instant the exchange succeeds (session now set) -- in every case before
   // the user ever sees the "set a new password" form.
-  const isResettingPassword = usePathname() === '/auth/reset-password';
+  //
+  // usePathname() alone isn't enough here: on a genuine cold start (app not
+  // already running, launched fresh via the deep link), it can still report
+  // the pre-launch default for a render or two before Expo Router finishes
+  // resolving the initial deep-linked route -- exactly the window these
+  // redirects evaluate in, so the Welcome redirect wins the race and hijacks
+  // the flow before the reset-password screen ever mounts (confirmed on a
+  // real device). expo-linking's useLinkingURL() seeds its state
+  // synchronously from the native launch URL on first render (unlike the
+  // deprecated useURL(), which resolves asynchronously), so checking the raw
+  // URL as a fallback closes that race.
+  const linkingURL = Linking.useLinkingURL();
+  const isResettingPassword =
+    usePathname() === '/auth/reset-password' || (linkingURL?.includes('/auth/reset-password') ?? false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [guestChecked, setGuestChecked] = useState(false);
