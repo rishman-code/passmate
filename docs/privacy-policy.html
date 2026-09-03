@@ -103,58 +103,67 @@
     </div>
 
     <h1>Privacy Policy</h1>
-    <p class="updated">GreenLight &nbsp;·&nbsp; Last updated: 1 August 2026</p>
+    <p class="updated">GreenLight &nbsp;·&nbsp; Last updated: 3 September 2026</p>
 
     <div class="callout">
-      <strong>Short version:</strong> GreenLight does not collect your name, email address, location, or any personal information. Your practice progress is stored only on your device and is never sent to our servers.
+      <strong>Short version:</strong> GreenLight offers a free account (email and password, or Sign in with Apple) so your progress syncs across devices — or you can use Guest Mode, which keeps everything on your device only. If you have an account, we store your email address and your practice/test data against it. Subscriptions are processed by RevenueCat and the App Store. We never sell your data, and you can permanently delete your account and everything tied to it at any time from inside the app.
     </div>
 
     <h2>1. Who we are</h2>
     <p>GreenLight is an iOS app that helps learners prepare for the UK DVSA driving theory test. It is developed and operated as an independent product. GreenLight is not affiliated with or endorsed by the Driver and Vehicle Standards Agency (DVSA).</p>
-    <p>If you have questions about this policy, contact us at: <a href="mailto:rohan.shinn@hotmail.com">rohan.shinn@hotmail.com</a></p>
+    <p>If you have questions about this policy, contact us at: <a href="mailto:sales@alphaalife.com">sales@alphaalife.com</a></p>
 
     <h2>2. What data GreenLight collects</h2>
-    <p>GreenLight collects as little data as possible. Here is the full picture:</p>
+    <p>What we collect depends on whether you create an account:</p>
 
-    <p><strong>Practice progress (stored on your device only)</strong><br>
-    Your answers, scores, and session history are stored in the app's memory while the app is open. This data is never uploaded to any server, never tied to an account, and is cleared when you delete the app. We do not have access to your practice history.</p>
+    <p><strong>Account information (if you sign up)</strong><br>
+    Creating an account requires an email address and a password (or Sign in with Apple, where available). Your password is hashed and managed by Supabase Auth — we never see or store it in plain text. Your account lets your progress sync across devices.</p>
 
-    <p><strong>Purchase status (via RevenueCat)</strong><br>
-    If you purchase the premium upgrade, RevenueCat — our payment processor — verifies your purchase using an anonymous device identifier. RevenueCat does not receive your name or email. See RevenueCat's privacy policy at <a href="https://www.revenuecat.com/privacy" target="_blank">revenuecat.com/privacy</a>.</p>
+    <p><strong>Guest Mode (if you don't sign up)</strong><br>
+    You can use GreenLight without creating an account. In Guest Mode, your practice progress stays only on your device and is never sent to our servers. Guest data is not linked to any account and is cleared when you delete the app.</p>
+
+    <p><strong>Practice and test data (if you have an account)</strong><br>
+    Your answered questions, mock test scores, category performance, streaks, flagged questions to revisit, and your driving-test journey status (e.g. a booked test date or pass/fail outcome) are stored against your account in our Supabase database, so this data syncs across your devices and survives a reinstall.</p>
+
+    <p><strong>Subscription and purchase status (via RevenueCat and the App Store)</strong><br>
+    Subscriptions are processed by Apple and RevenueCat. We receive your subscription entitlement status (active or not) linked to your account so premium features unlock correctly — we never see or store your payment card details. See RevenueCat's privacy policy at <a href="https://www.revenuecat.com/privacy" target="_blank">revenuecat.com/privacy</a>.</p>
 
     <p><strong>Question and content delivery (via Supabase)</strong><br>
-    The app fetches questions from a database hosted by Supabase. These are standard HTTPS requests; Supabase's servers may log your IP address as part of normal server operation, as any web server does. No account is created and no personal data is associated with these requests. See Supabase's privacy policy at <a href="https://supabase.com/privacy" target="_blank">supabase.com/privacy</a>.</p>
+    The app fetches questions from a database hosted by Supabase over standard HTTPS requests; Supabase's servers may log your IP address as part of normal server operation, as any web server does. See Supabase's privacy policy at <a href="https://supabase.com/privacy" target="_blank">supabase.com/privacy</a>.</p>
 
-    <p><strong>AI explanations (pre-generated)</strong><br>
-    The AI explanations shown in the app were generated in advance using Anthropic's Claude API and are stored in our database. In normal use, <strong>no data from your session is sent to Anthropic</strong> — you receive a pre-written explanation from our cache, not a live API call. Anthropic's privacy policy is at <a href="https://www.anthropic.com/privacy" target="_blank">anthropic.com/privacy</a>.</p>
+    <p><strong>Device notifications (if enabled)</strong><br>
+    If you allow notifications, the app schedules reminders (e.g. to come back and practice, or before your test certificate expires) directly on your device. These are scheduled locally by the app itself — they are not sent from our servers, and we don't track whether you open them.</p>
+
+    <p><strong>AI explanations (mostly pre-generated)</strong><br>
+    The AI explanations shown in the app were generated in advance using Anthropic's Claude API and are stored in our database. Fetching a cached explanation is an authenticated request tied to your account, but in normal use <strong>no data about your specific answers is sent to Anthropic</strong> — you receive a pre-written explanation from our cache, not a live API call. Anthropic's privacy policy is at <a href="https://www.anthropic.com/privacy" target="_blank">anthropic.com/privacy</a>.</p>
 
     <h2>3. What GreenLight does NOT collect</h2>
     <ul>
-      <li>Your name, email address, or any account information</li>
       <li>Your location or GPS data</li>
       <li>Your contacts, camera, microphone, or photos</li>
       <li>Device identifiers for advertising (IDFA)</li>
       <li>Browsing history or cross-app tracking data</li>
       <li>Crash reports or analytics (no analytics SDK is installed)</li>
+      <li>Your payment card or bank details (handled entirely by Apple and RevenueCat)</li>
     </ul>
 
     <h2>4. Cookies and tracking</h2>
     <p>GreenLight is a native iOS app. It does not use cookies. It does not contain any advertising SDKs, analytics SDKs (such as Firebase or Mixpanel), or cross-app tracking technology. Your App Tracking Transparency permission is not requested because we do not track you across apps or websites.</p>
 
     <h2>5. Children's privacy</h2>
-    <p>GreenLight is rated 4+ and is suitable for all ages. We do not knowingly collect personal data from anyone, including children under 13. Because no personal data is collected at all, GreenLight complies with COPPA and similar regulations by design.</p>
+    <p>GreenLight is rated 4+ by the App Store. Creating an account requires an email address, so we recommend account creation only be done by, or with the involvement of, a parent or guardian for younger users — Guest Mode, which requires no email address or account, is available for anyone who prefers not to sign up. We do not knowingly collect personal data from children under 13; if we become aware that we have, we will delete the associated account and its data.</p>
 
     <h2>6. Data retention and deletion</h2>
-    <p>Because GreenLight does not store personal data on our servers, there is nothing to delete from our end. Your on-device practice history is deleted automatically when you uninstall the app. If you made a purchase, RevenueCat retains anonymous purchase records as required for receipt validation — contact RevenueCat directly if you wish to request deletion of those records.</p>
+    <p>If you have an account, your data (email, progress, test history, journey status) is retained for as long as your account exists. You can permanently delete your account and everything tied to it at any time from <strong>Profile → Delete Account</strong> inside the app — this immediately and permanently removes your account and all associated data from our database, and cannot be undone. Guest-mode data lives only on your device and is deleted automatically when you uninstall the app. If you made a purchase, RevenueCat and Apple retain records as required for receipt validation and legal/tax purposes even after account deletion — contact RevenueCat or Apple directly to request deletion of those records.</p>
 
     <h2>7. Security</h2>
-    <p>All communication between the app and our database (Supabase) uses HTTPS encryption. We do not store passwords or payment card details — purchases are handled entirely by Apple and RevenueCat.</p>
+    <p>All communication between the app and our services (Supabase, RevenueCat) uses HTTPS encryption. Your password is hashed and managed by Supabase Auth — we never see or store your plain-text password. We do not store your payment card details; purchases are handled entirely by Apple and RevenueCat.</p>
 
     <h2>8. Third-party services summary</h2>
     <ul>
-      <li><strong>Supabase</strong> — database hosting (questions and cached AI explanations). <a href="https://supabase.com/privacy" target="_blank">Privacy policy →</a></li>
-      <li><strong>RevenueCat</strong> — in-app purchase verification. <a href="https://www.revenuecat.com/privacy" target="_blank">Privacy policy →</a></li>
-      <li><strong>Apple App Store</strong> — app distribution and payment processing. <a href="https://www.apple.com/legal/privacy/" target="_blank">Privacy policy →</a></li>
+      <li><strong>Supabase</strong> — account authentication and database hosting (your progress, test history, and cached AI explanations). <a href="https://supabase.com/privacy" target="_blank">Privacy policy →</a></li>
+      <li><strong>RevenueCat</strong> — subscription and in-app purchase verification. <a href="https://www.revenuecat.com/privacy" target="_blank">Privacy policy →</a></li>
+      <li><strong>Apple App Store</strong> — app distribution, payment processing, and (optionally) Sign in with Apple. <a href="https://www.apple.com/legal/privacy/" target="_blank">Privacy policy →</a></li>
       <li><strong>Anthropic</strong> — AI explanations (pre-generated; not called per-user in production). <a href="https://www.anthropic.com/privacy" target="_blank">Privacy policy →</a></li>
     </ul>
 
@@ -162,7 +171,7 @@
     <p>If we make material changes to this policy, we will update the date at the top of this page. We encourage you to review this page periodically. Continued use of the app after changes constitutes acceptance of the revised policy.</p>
 
     <h2>10. Contact</h2>
-    <p>Questions or concerns about this privacy policy? Email us at <a href="mailto:rohan.shinn@hotmail.com">rohan.shinn@hotmail.com</a>.</p>
+    <p>Questions or concerns about this privacy policy? Email us at <a href="mailto:sales@alphaalife.com">sales@alphaalife.com</a>.</p>
 
     <hr>
     <p style="font-size:13px; color:#54545E;">© 2026 GreenLight. All rights reserved.</p>
