@@ -13,6 +13,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { deleteAccount, signOut } from '@/lib/auth';
 import { setGuestMode } from '@/lib/guest-mode';
 import { resetOnboardingSeen } from '@/lib/onboarding';
+import { isRevenueCatConfigured } from '@/lib/revenuecat';
 import { useAuthStore } from '@/stores/auth-store';
 import { useJourneyStore } from '@/stores/journey-store';
 import { useMistakeLedgerStore } from '@/stores/mistake-ledger-store';
@@ -239,7 +240,7 @@ export default function ProfileScreen() {
                 </ThemedText>
               </View>
             ) : null}
-            {isPremium ? (
+            {isRevenueCatConfigured && isPremium ? (
               <Button
                 title="Manage Subscription"
                 variant="outline"
@@ -248,14 +249,16 @@ export default function ProfileScreen() {
                 testID="profile-manage-subscription-button"
               />
             ) : null}
-            <Button
-              title="Restore Purchases"
-              variant="outline"
-              onPress={handleRestore}
-              loading={isLoading}
-              fullWidth
-              testID="profile-restore-button"
-            />
+            {isRevenueCatConfigured ? (
+              <Button
+                title="Restore Purchases"
+                variant="outline"
+                onPress={handleRestore}
+                loading={isLoading}
+                fullWidth
+                testID="profile-restore-button"
+              />
+            ) : null}
             {user ? (
               <>
                 <Button

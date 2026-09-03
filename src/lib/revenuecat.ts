@@ -95,6 +95,9 @@ export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerIn
 }
 
 export async function restorePurchases(): Promise<CustomerInfo> {
+  if (!isRevenueCatConfigured) {
+    throw new Error('Purchases are not available in this build.');
+  }
   await initializeRevenueCat();
   return Purchases.restorePurchases();
 }
