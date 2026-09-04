@@ -11,7 +11,7 @@ GreenLight
 UK Driving Theory Test Prep
 
 ## Promotional Text  (170 chars max — can be updated any time without resubmission)
-Contains 700+ official DVSA questions with AI-powered explanations. The smartest way to pass your theory test first time.
+700+ official DVSA questions, AI-powered explanations, and a full mock test simulator — 100% free. The smartest way to pass your theory test first time.
 
 ## Keywords  (100 chars max, comma-separated, no spaces after commas)
 driving theory,dvsa,theory test,mock test,learner driver,hazard awareness,uk driving,revision
@@ -44,8 +44,8 @@ Take a full 50-question mock test with a live 57-minute countdown — exactly li
 WEAK SPOT TRACKER
 Your Progress screen shows accuracy per category, highlights where you're below the pass threshold, and keeps your mock test history so you can see improvement over time.
 
-FLEXIBLE PLANS
-Go monthly at £4.99, or save with the yearly plan at £49.99. Cancel anytime.
+FREE TO USE
+Every feature is free — no subscription, no paywall, no ads.
 
 ---
 
@@ -71,15 +71,14 @@ Secondary: Utilities
 4+ (no objectionable content)
 
 ## Price
-Two auto-renewable subscription plans, both in the same App Store Connect
-subscription group:
-- Monthly: £4.99/month — product ID must be exactly `greenlight_monthly`
-- Yearly: £49.99/year — product ID must be exactly `greenlight_yearly`
-
-Both product IDs must match `MONTHLY_PRODUCT_ID` / `YEARLY_PRODUCT_ID` in
-`src/lib/revenuecat.ts` exactly, and both RevenueCat products need to be
-attached to a single entitlement named exactly `greenlight_theory_test`
-(matching `PRO_ENTITLEMENT_ID` in the same file).
+Free. This release ships with RevenueCat unconfigured (see CLAUDE.md's
+Paywall section) -- every feature is unlocked for everyone, no purchase
+flow exists in this build. The monthly (£4.99) / yearly (£49.99)
+subscription plan is fully built (src/lib/revenuecat.ts) but deliberately
+turned off for now; re-enable it in a future version by restoring
+EXPO_PUBLIC_REVENUECAT_IOS_KEY and setting up the matching App Store
+Connect subscription group + RevenueCat entitlement (`greenlight_theory_test`)
+at that time.
 
 ---
 
