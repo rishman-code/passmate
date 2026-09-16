@@ -8,6 +8,19 @@ const corsHeaders = {
 
 const AUTH_CHECK_TIMEOUT_MS = 8000;
 const ANTHROPIC_TIMEOUT_MS = 15000;
+// Generous ceiling meant to catch runaway/abusive usage, not normal study
+// sessions (a full mock test is 50 questions) -- keeps a single account from
+// driving unbounded Anthropic spend.
+const DAILY_EXPLANATION_LIMIT = 150;
+// How long a request will wait for another in-flight request to finish
+// fetching the same question's explanation, before giving up and falling
+// back to the DVSA explanation, rather than paying for a duplicate Anthropic call.
+const CACHE_CLAIM_POLL_MS = 400;
+const CACHE_CLAIM_MAX_POLLS = 5;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
@@ -39,6 +52,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } },
     );
+    let userId: string;
     try {
       const { data, error: authError } = await withTimeout(
         userClient.auth.getUser(),
@@ -46,6 +60,7 @@ Deno.serve(async (req) => {
         'Auth check',
       );
       if (authError || !data.user) return json({ error: 'Unauthorized' }, 401);
+      userId = data.user.id;
     } catch {
       return json({ error: 'Unauthorized' }, 401);
     }
@@ -79,39 +94,85 @@ Deno.serve(async (req) => {
 
     if (qErr || !question) return json({ error: 'Question not found' }, 404);
 
+    // Per-user daily cap -- only counts requests that actually reach here
+    // (i.e. cache misses that are about to call Anthropic), so cache hits
+    // stay unlimited and free.
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: usageCount, error: usageErr } = await svc.rpc('increment_ai_explanation_usage', {
+      p_user_id: userId,
+      p_date: today,
+    });
+    if (!usageErr && typeof usageCount === 'number' && usageCount > DAILY_EXPLANATION_LIMIT) {
+      return json({ explanation: question.explanation });
+    }
+
+    // Claim this question so concurrent requests for the same cache miss
+    // don't each pay for their own Anthropic call. The empty ai_explanation
+    // is a placeholder sentinel -- the cache-hit check above treats it as
+    // "not cached yet" (falsy), so a claim that never completes doesn't
+    // wedge the question forever.
+    const { data: claimed } = await svc
+      .from('ai_explanation_cache')
+      .upsert(
+        { question_id, ai_explanation: '', created_at: new Date().toISOString() },
+        { onConflict: 'question_id', ignoreDuplicates: true },
+      )
+      .select('question_id');
+
+    if (!claimed || claimed.length === 0) {
+      // Someone else already claimed it -- wait briefly for their result
+      // instead of duplicating the Anthropic call.
+      for (let attempt = 0; attempt < CACHE_CLAIM_MAX_POLLS; attempt++) {
+        await sleep(CACHE_CLAIM_POLL_MS);
+        const { data: retry } = await svc
+          .from('ai_explanation_cache')
+          .select('ai_explanation')
+          .eq('question_id', question_id)
+          .maybeSingle();
+        if (retry?.ai_explanation) return json({ explanation: retry.ai_explanation });
+      }
+      return json({ explanation: question.explanation });
+    }
+
     const correctText = question[`option_${question.correct_answer}` as keyof typeof question] as string;
 
-    const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') });
-    const message = await anthropic.messages.create(
-      {
-        model: 'claude-haiku-4-5',
-        max_tokens: 200,
-        messages: [
-          {
-            role: 'user',
-            content: `You are a UK driving theory test instructor. In 2-3 clear sentences, explain why "${correctText}" is the correct answer to the question below. Build on the official DVSA explanation but make it more memorable for a learner. Write in plain prose — no markdown, no bullet points, no headers, no bold or italic formatting.
+    try {
+      const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') });
+      const message = await anthropic.messages.create(
+        {
+          model: 'claude-haiku-4-5',
+          max_tokens: 200,
+          messages: [
+            {
+              role: 'user',
+              content: `You are a UK driving theory test instructor. In 2-3 clear sentences, explain why "${correctText}" is the correct answer to the question below. Build on the official DVSA explanation but make it more memorable for a learner. Write in plain prose — no markdown, no bullet points, no headers, no bold or italic formatting.
 
 Question: ${question.question_text}
 Category: ${question.category}
 Correct answer: ${correctText}
 DVSA explanation: ${question.explanation}`,
-          },
-        ],
-      },
-      { timeout: ANTHROPIC_TIMEOUT_MS },
-    );
+            },
+          ],
+        },
+        { timeout: ANTHROPIC_TIMEOUT_MS },
+      );
 
-    const block = message.content[0];
-    const explanation = block.type === 'text' ? block.text : question.explanation;
+      const block = message.content[0];
+      const explanation = block.type === 'text' ? block.text : question.explanation;
 
-    // Cache for future requests
-    await svc.from('ai_explanation_cache').upsert({
-      question_id,
-      ai_explanation: explanation,
-      created_at: new Date().toISOString(),
-    });
+      // Fill in the claimed placeholder with the real explanation
+      await svc
+        .from('ai_explanation_cache')
+        .update({ ai_explanation: explanation, created_at: new Date().toISOString() })
+        .eq('question_id', question_id);
 
-    return json({ explanation });
+      return json({ explanation });
+    } catch (anthropicErr) {
+      // Release the claim so a future request can retry this question,
+      // rather than leaving a permanent empty placeholder behind.
+      await svc.from('ai_explanation_cache').delete().eq('question_id', question_id).eq('ai_explanation', '');
+      throw anthropicErr;
+    }
   } catch (err) {
     console.error(err);
     return json({ error: 'Internal server error' }, 500);
