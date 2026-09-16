@@ -94,18 +94,6 @@ Deno.serve(async (req) => {
 
     if (qErr || !question) return json({ error: 'Question not found' }, 404);
 
-    // Per-user daily cap -- only counts requests that actually reach here
-    // (i.e. cache misses that are about to call Anthropic), so cache hits
-    // stay unlimited and free.
-    const today = new Date().toISOString().slice(0, 10);
-    const { data: usageCount, error: usageErr } = await svc.rpc('increment_ai_explanation_usage', {
-      p_user_id: userId,
-      p_date: today,
-    });
-    if (!usageErr && typeof usageCount === 'number' && usageCount > DAILY_EXPLANATION_LIMIT) {
-      return json({ explanation: question.explanation });
-    }
-
     // Claim this question so concurrent requests for the same cache miss
     // don't each pay for their own Anthropic call. The empty ai_explanation
     // is a placeholder sentinel -- the cache-hit check above treats it as
@@ -121,7 +109,8 @@ Deno.serve(async (req) => {
 
     if (!claimed || claimed.length === 0) {
       // Someone else already claimed it -- wait briefly for their result
-      // instead of duplicating the Anthropic call.
+      // instead of duplicating the Anthropic call. This costs nothing
+      // against the daily cap below, since no Anthropic call is made here.
       for (let attempt = 0; attempt < CACHE_CLAIM_MAX_POLLS; attempt++) {
         await sleep(CACHE_CLAIM_POLL_MS);
         const { data: retry } = await svc
@@ -131,6 +120,21 @@ Deno.serve(async (req) => {
           .maybeSingle();
         if (retry?.ai_explanation) return json({ explanation: retry.ai_explanation });
       }
+      return json({ explanation: question.explanation });
+    }
+
+    // Per-user daily cap -- checked only for the request that won the claim
+    // above, i.e. the one actually about to call Anthropic. Cache hits and
+    // requests that just poll for another in-flight claim never reach here,
+    // so they stay unlimited and free.
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: usageCount, error: usageErr } = await svc.rpc('increment_ai_explanation_usage', {
+      p_user_id: userId,
+      p_date: today,
+    });
+    if (!usageErr && typeof usageCount === 'number' && usageCount > DAILY_EXPLANATION_LIMIT) {
+      // Release the claim so a future (under-cap) request can fill it in.
+      await svc.from('ai_explanation_cache').delete().eq('question_id', question_id).eq('ai_explanation', '');
       return json({ explanation: question.explanation });
     }
 
