@@ -31,6 +31,10 @@ $$;
 
 -- SECURITY DEFINER runs as the function owner regardless of caller --
 -- only the service role should ever call it, so keep it out of reach of
--- normal authenticated/anon roles.
-REVOKE ALL ON FUNCTION increment_ai_explanation_usage(uuid, date) FROM PUBLIC;
+-- normal authenticated/anon roles. Supabase grants EXECUTE on new functions
+-- to anon/authenticated by default, separately from the PUBLIC pseudo-role,
+-- so both must be revoked explicitly or the RPC stays callable directly via
+-- PostgREST by any client -- letting anyone grief another user's daily cap
+-- by spamming their counter.
+REVOKE EXECUTE ON FUNCTION increment_ai_explanation_usage(uuid, date) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION increment_ai_explanation_usage(uuid, date) TO service_role;
