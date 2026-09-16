@@ -12,8 +12,8 @@ import { ThemedText } from '@/components/themed-text';
 import { CATEGORY_ICONS, DVSA_CATEGORIES, type DVSACategory } from '@/constants/categories';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { markOnboardingComplete } from '@/lib/onboarding';
 import { useJourneyStore } from '@/stores/journey-store';
+import { useOnboardingStore } from '@/stores/onboarding-store';
 import type { JourneyState, LocalDate } from '@/types/journey';
 import { addYears, todayInLondon } from '@/utils/journey-dates';
 import { buildPlan } from '@/utils/plan';
@@ -54,6 +54,7 @@ export default function OnboardingScreen() {
   const journey = useJourneyStore((s) => s.journey);
   const updateJourney = useJourneyStore((s) => s.updateJourney);
   const markPromptSeen = useJourneyStore((s) => s.markPromptSeen);
+  const markOnboardingComplete = useOnboardingStore((s) => s.markComplete);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedState, setSelectedState] = useState<JourneyState | null>(journey.state ?? null);

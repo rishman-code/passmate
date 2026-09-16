@@ -10,7 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { markOnboardingComplete } from '@/lib/onboarding';
+import { useOnboardingStore } from '@/stores/onboarding-store';
 import { useWelcomeSessionStore } from '@/stores/welcome-session-store';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -37,6 +37,7 @@ const ROAD_PATH = 'M 20 6 C 85 16, 88 34, 55 44 C 20 54, 10 74, 20 94';
 export default function WelcomeScreen() {
   const theme = useTheme();
   const markWelcomeSeen = useWelcomeSessionStore((s) => s.markWelcomeSeen);
+  const markOnboardingComplete = useOnboardingStore((s) => s.markComplete);
 
   const handleNext = () => {
     // Let the root layout's redirect logic decide what comes next

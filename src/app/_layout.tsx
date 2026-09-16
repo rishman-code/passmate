@@ -33,8 +33,8 @@ import { Colors } from '@/constants/theme';
 import { useCertificateExpiryWatch } from '@/hooks/use-certificate-expiry-watch';
 import { useReEngagementReminders } from '@/hooks/use-re-engagement-reminders';
 import { isGuestMode } from '@/lib/guest-mode';
-import { hasSeenOnboarding } from '@/lib/onboarding';
 import { useAuthStore } from '@/stores/auth-store';
+import { useOnboardingStore } from '@/stores/onboarding-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { useWelcomeSessionStore } from '@/stores/welcome-session-store';
 
@@ -45,6 +45,9 @@ export default function RootLayout() {
   const authLoading = useAuthStore((s) => s.isLoading);
   const session = useAuthStore((s) => s.session);
   const hasSeenWelcome = useWelcomeSessionStore((s) => s.hasSeenWelcome);
+  const onboardingChecked = useOnboardingStore((s) => s.checked);
+  const needsOnboarding = useOnboardingStore((s) => s.needsOnboarding);
+  const initializeOnboarding = useOnboardingStore((s) => s.initialize);
   // A <Redirect> rendered before the native navigator has finished its first
   // mount can be silently dropped (no-op) instead of queued -- this doesn't
   // reproduce on web, where the browser's own history/URL state backs it up.
@@ -73,10 +76,19 @@ export default function RootLayout() {
   // deprecated useURL(), which resolves asynchronously), so checking the raw
   // URL as a fallback closes that race.
   const linkingURL = Linking.useLinkingURL();
+  const pathname = usePathname();
   const isResettingPassword =
-    usePathname() === '/auth/reset-password' || (linkingURL?.includes('/auth/reset-password') ?? false);
-  const [onboardingChecked, setOnboardingChecked] = useState(false);
-  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+    pathname === '/auth/reset-password' || (linkingURL?.includes('/auth/reset-password') ?? false);
+  // The onboarding screen's own finish() -- and, for retake/certified, the
+  // journey screens it hands off to -- already does its own explicit
+  // router.replace() the instant needsOnboarding flips to false (see
+  // onboarding-store.ts). Without this guard the sign-in/tabs redirects
+  // below react to that same state change and can immediately clobber that
+  // navigation (e.g. bouncing a certified user's /journey/certificate
+  // hand-off back to sign-in), since they don't care which screen is
+  // currently driving the transition.
+  const isOnboardingHandoff =
+    pathname === '/onboarding' || pathname === '/journey/result-letter' || pathname === '/journey/certificate';
   const [guestChecked, setGuestChecked] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
 
@@ -103,15 +115,12 @@ export default function RootLayout() {
   useEffect(() => {
     initialize();
     initializeAuth();
-    hasSeenOnboarding().then((seen) => {
-      setNeedsOnboarding(!seen);
-      setOnboardingChecked(true);
-    });
+    initializeOnboarding();
     isGuestMode().then((guest) => {
       setIsGuest(guest);
       setGuestChecked(true);
     });
-  }, [initialize, initializeAuth]);
+  }, [initialize, initializeAuth, initializeOnboarding]);
 
   const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
   const colors = Colors[colorScheme === 'unspecified' ? 'light' : colorScheme ?? 'light'];
@@ -196,14 +205,16 @@ export default function RootLayout() {
         !session &&
         guestChecked &&
         !isGuest &&
-        !isResettingPassword && <Redirect href="/auth/sign-in" />}
+        !isResettingPassword &&
+        !isOnboardingHandoff && <Redirect href="/auth/sign-in" />}
       {navigationReady &&
         hasSeenWelcome &&
         onboardingChecked &&
         !needsOnboarding &&
         guestChecked &&
         (session || isGuest) &&
-        !isResettingPassword && <Redirect href="/(tabs)" />}
+        !isResettingPassword &&
+        !isOnboardingHandoff && <Redirect href="/(tabs)" />}
     </ThemeProvider>
   );
 }
