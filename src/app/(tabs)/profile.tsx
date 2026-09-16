@@ -12,11 +12,11 @@ import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { deleteAccount, signOut } from '@/lib/auth';
 import { setGuestMode } from '@/lib/guest-mode';
-import { resetOnboardingSeen } from '@/lib/onboarding';
 import { isRevenueCatConfigured } from '@/lib/revenuecat';
 import { useAuthStore } from '@/stores/auth-store';
 import { useJourneyStore } from '@/stores/journey-store';
 import { useMistakeLedgerStore } from '@/stores/mistake-ledger-store';
+import { useOnboardingStore } from '@/stores/onboarding-store';
 import { useProgressStore } from '@/stores/progress-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { useWelcomeSessionStore } from '@/stores/welcome-session-store';
@@ -46,6 +46,7 @@ export default function ProfileScreen() {
   const resetJourney = useJourneyStore((s) => s.reset);
   const resetMistakeLedger = useMistakeLedgerStore((s) => s.reset);
   const resetWelcomeSeen = useWelcomeSessionStore((s) => s.resetWelcomeSeen);
+  const resetOnboardingSeen = useOnboardingStore((s) => s.reset);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const displayName = user ? ((user.user_metadata?.name as string | undefined) ?? user.email ?? 'Account') : 'Guest';
