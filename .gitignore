@@ -48,6 +48,7 @@ example
 *.env
 credentials.json
 .credentials
+.eas-secrets/
 
 # DVSA question bank source files (large binaries)
 wetransfer_*.zip
