@@ -26,6 +26,7 @@ import { JOURNEY_PROMPT_THRESHOLD } from '@/constants/journey';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useQuestions } from '@/hooks/use-questions';
 import { useTheme } from '@/hooks/use-theme';
+import { showQuestionsUnavailable } from '@/lib/questions-unavailable';
 import { fetchAllQuestions, fetchQuestionsByCategory } from '@/services/questions';
 import { usePracticeStore } from '@/stores/practice-store';
 import { useJourneyStore } from '@/stores/journey-store';
@@ -74,6 +75,8 @@ export default function HomeScreen() {
       setCategoryFilter(null);
       setQuestions(queue);
       router.push('/practice/session');
+    } catch {
+      showQuestionsUnavailable();
     } finally {
       setIsStarting(false);
     }
@@ -87,6 +90,8 @@ export default function HomeScreen() {
       setCategoryFilter(category);
       setQuestions(queue);
       router.push('/practice/session');
+    } catch {
+      showQuestionsUnavailable();
     } finally {
       setIsStarting(false);
     }

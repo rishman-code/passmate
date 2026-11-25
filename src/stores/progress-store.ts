@@ -78,7 +78,9 @@ export const useProgressStore = create<ProgressState>()(
             supabase.from('user_progress').upsert({
               user_id: userId,
               ...updated,
-            }).then();
+            }).then(({ error }) => {
+              if (error) console.error('Failed to save progress to Supabase:', error.message);
+            });
           }
 
           const today = localDateStr();
@@ -117,7 +119,9 @@ export const useProgressStore = create<ProgressState>()(
               passed: result.passed,
               completed_at: result.completed_at,
               time_taken_seconds: result.time_taken_seconds,
-            }).then();
+            }).then(({ error }) => {
+              if (error) console.error('Failed to save mock test result to Supabase:', error.message);
+            });
           }
 
           return { mockTestResults: [entry, ...state.mockTestResults] };

@@ -189,7 +189,7 @@ All migrations have been run. The questions table has **717 questions**.
 
 ### Tables
 
-**questions** — RLS OFF (public read-only data)
+**questions** — RLS ON, with a public SELECT policy (`public_read_questions`, anon + authenticated). No write policies.
 ```typescript
 interface Question {
   id: string;
@@ -255,7 +255,7 @@ interface UserJourneyRow {
 ### RLS Summary
 | Table | RLS | Notes |
 |---|---|---|
-| questions | OFF | Public read-only |
+| questions | ON | Policy `public_read_questions`: SELECT for anon + authenticated. **Must exist** — without it the app gets 0 questions |
 | user_progress | ON | Policy: `auth.uid() = user_id` |
 | mock_test_results | ON | Policy: `auth.uid() = user_id` |
 | ai_explanation_cache | ON | Authenticated SELECT; INSERT/UPDATE via service role only |
@@ -393,6 +393,11 @@ handles this weighting. Do not rewrite this function — it is correct.
 - `fetchAllQuestions()` — paginates with `.range()` to load all 717 questions
 - `fetchQuestionsByCategory(category)` — queries Supabase with `.eq()` filter
 - `selectMockTestQuestions()` — stratified: ~3-4 questions per category, 50 total
+- When Supabase is configured and returns 0 rows or an error, the fetchers throw
+  `QuestionsUnavailableError` and the screens show a "Couldn't load questions" alert.
+  They do NOT fall back to `SAMPLE_QUESTIONS` (those are only for running without
+  Supabase): sample ids don't exist in the DB, so progress saves would fail their
+  foreign key. This silent fallback hid a missing RLS policy until 2026-11-25.
 
 ### AI Explanations
 Shown after every answer for premium users. Free users see the DVSA explanation only.

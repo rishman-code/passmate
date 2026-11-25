@@ -11,6 +11,7 @@ import { DVSA_CATEGORIES } from '@/constants/categories';
 import { Spacing } from '@/constants/theme';
 import { useQuestions } from '@/hooks/use-questions';
 import { useTheme } from '@/hooks/use-theme';
+import { showQuestionsUnavailable } from '@/lib/questions-unavailable';
 import { fetchAllQuestions, fetchQuestionsByCategory } from '@/services/questions';
 import { useProgressStore } from '@/stores/progress-store';
 import { usePracticeStore } from '@/stores/practice-store';
@@ -33,6 +34,8 @@ export default function PracticeScreen() {
       setCategoryFilter(null);
       setQuestions(queue);
       router.push('/practice/session');
+    } catch {
+      showQuestionsUnavailable();
     } finally {
       setIsStarting(false);
     }
@@ -50,6 +53,8 @@ export default function PracticeScreen() {
       setCategoryFilter(category);
       setQuestions(queue);
       router.push('/practice/session');
+    } catch {
+      showQuestionsUnavailable();
     } finally {
       setIsStarting(false);
     }

@@ -5,6 +5,21 @@ import type { Question } from '@/types/database';
 
 const PAGE_SIZE = 1000;
 
+/**
+ * Thrown when Supabase is configured but returns no questions (query error,
+ * or zero rows -- e.g. RLS switched on for `questions` without a SELECT
+ * policy). We deliberately do NOT fall back to SAMPLE_QUESTIONS here: their
+ * ids (q1..q14) don't exist in the database, so every progress save would
+ * fail its foreign key, and a 14-question mock test can never reach the
+ * 43/50 pass mark. Sample questions are only for running without Supabase.
+ */
+export class QuestionsUnavailableError extends Error {
+  constructor(detail: string) {
+    super(`Questions could not be loaded: ${detail}`);
+    this.name = 'QuestionsUnavailableError';
+  }
+}
+
 async function fetchQuestionsPage(from: number, to: number, category?: string) {
   let query = supabase.from('questions').select('*').range(from, to);
 
@@ -27,8 +42,9 @@ export async function fetchAllQuestions(): Promise<Question[]> {
     const { data, error } = await fetchQuestionsPage(from, from + PAGE_SIZE - 1);
 
     if (error) {
-      console.warn('fetchAllQuestions error:', error.message);
-      return all.length > 0 ? all : SAMPLE_QUESTIONS;
+      console.error('fetchAllQuestions error:', error.message);
+      if (all.length > 0) return all;
+      throw new QuestionsUnavailableError(error.message);
     }
 
     if (!data?.length) {
@@ -44,7 +60,12 @@ export async function fetchAllQuestions(): Promise<Question[]> {
     from += PAGE_SIZE;
   }
 
-  return all.length > 0 ? all : SAMPLE_QUESTIONS;
+  if (all.length === 0) {
+    console.error('fetchAllQuestions: Supabase returned 0 questions (check RLS on public.questions)');
+    throw new QuestionsUnavailableError('the questions table returned no rows');
+  }
+
+  return all;
 }
 
 export async function fetchQuestionsByCategory(category: string): Promise<Question[]> {
@@ -59,8 +80,9 @@ export async function fetchQuestionsByCategory(category: string): Promise<Questi
     const { data, error } = await fetchQuestionsPage(from, from + PAGE_SIZE - 1, category);
 
     if (error) {
-      console.warn('fetchQuestionsByCategory error:', error.message);
-      break;
+      console.error('fetchQuestionsByCategory error:', error.message);
+      if (all.length > 0) return all;
+      throw new QuestionsUnavailableError(error.message);
     }
 
     if (!data?.length) {
@@ -80,7 +102,8 @@ export async function fetchQuestionsByCategory(category: string): Promise<Questi
     return all;
   }
 
-  return SAMPLE_QUESTIONS.filter((q) => q.category === category);
+  console.error(`fetchQuestionsByCategory: Supabase returned 0 questions for "${category}"`);
+  throw new QuestionsUnavailableError(`no questions returned for ${category}`);
 }
 
 export async function fetchQuestionById(id: string): Promise<Question | undefined> {
@@ -90,8 +113,13 @@ export async function fetchQuestionById(id: string): Promise<Question | undefine
 
   const { data, error } = await supabase.from('questions').select('*').eq('id', id).maybeSingle();
 
-  if (error || !data) {
-    return SAMPLE_QUESTIONS.find((q) => q.id === id);
+  if (error) {
+    console.error('fetchQuestionById error:', error.message);
+    return undefined;
+  }
+
+  if (!data) {
+    return undefined;
   }
 
   return data as Question;
