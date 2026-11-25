@@ -8,6 +8,7 @@ import { computeCategoryScores, getWeakestCategories } from '@/utils/category-sc
 export function useQuestions() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -16,6 +17,13 @@ export function useQuestions() {
       .then((data) => {
         if (mounted) {
           setQuestions(data);
+          setLoadError(false);
+        }
+      })
+      .catch(() => {
+        // fetchAllQuestions already logged the cause; screens show their empty state.
+        if (mounted) {
+          setLoadError(true);
         }
       })
       .finally(() => {
@@ -47,6 +55,7 @@ export function useQuestions() {
   return {
     questions,
     isLoading,
+    loadError,
     questionCategories,
     categoryScores,
     weakestCategories,

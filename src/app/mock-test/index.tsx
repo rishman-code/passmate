@@ -14,6 +14,7 @@ import {
 } from '@/constants/categories';
 import { BorderRadius, Fonts, Spacing, tactileShadow } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { showQuestionsUnavailable } from '@/lib/questions-unavailable';
 import { fetchAllQuestions, selectMockTestQuestions } from '@/services/questions';
 import { useMockTestStore } from '@/stores/mock-test-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
@@ -50,6 +51,8 @@ export default function MockTestIntroScreen() {
       const mockQuestions = selectMockTestQuestions(allQuestions, MOCK_TEST_QUESTION_COUNT);
       setQuestions(mockQuestions);
       router.push('/mock-test/session');
+    } catch {
+      showQuestionsUnavailable();
     } finally {
       setIsStarting(false);
     }
